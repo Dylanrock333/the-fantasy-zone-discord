@@ -1,6 +1,6 @@
 const { Events } = require("discord.js");
 const { logger } = require("../utils/logger");
-const { askFantasyAgent } = require("../utils/fantasyAgentClient");
+const { askFantasyAgent, renderChartImage } = require("../utils/fantasyAgentClient");
 const { splitMessage } = require("../utils/splitMessage");
 const { extractChartBlocks } = require("../utils/chartRenderer");
 
@@ -51,12 +51,22 @@ async function execute(message) {
       : "";
 
     const reply = await askFantasyAgent(message.author.id, contextBlock + content);
-    const { text, tables } = extractChartBlocks(reply);
+    const { text, charts } = extractChartBlocks(reply);
 
-    const files = tables.map((t, i) => ({
-      attachment: Buffer.from(t.text, "utf8"),
-      name: `${(t.title || `table-${i + 1}`).replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.txt`,
-    }));
+    const files = [];
+    for (let i = 0; i < charts.length; i++) {
+      const chart = charts[i];
+      const name = (chart.title || `chart-${i + 1}`).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      try {
+        files.push({ attachment: await renderChartImage(chart), name: `${name}.png` });
+      } catch (err) {
+        logger.error("chart image render failed:", err);
+        files.push({
+          attachment: Buffer.from(JSON.stringify(chart, null, 2), "utf8"),
+          name: `${name}.json`,
+        });
+      }
+    }
 
     const chunks = text ? splitMessage(text) : [];
     if (!chunks.length && files.length) {

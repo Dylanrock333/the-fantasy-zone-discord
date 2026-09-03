@@ -36,4 +36,20 @@ async function askFantasyAgent(sessionId, message) {
   throw new Error("fantasy agent stream ended without a done event");
 }
 
-module.exports = { askFantasyAgent };
+// Sends one parsed ```chart JSON object to fantasy-bot's renderer and gets
+// a PNG back, ready to attach to a Discord message.
+async function renderChartImage(chartData) {
+  const res = await fetch(`${FANTASY_AGENT_URL}/api/chart`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(chartData),
+  });
+
+  if (!res.ok) {
+    throw new Error(`chart render request failed: ${res.status}`);
+  }
+
+  return Buffer.from(await res.arrayBuffer());
+}
+
+module.exports = { askFantasyAgent, renderChartImage };
