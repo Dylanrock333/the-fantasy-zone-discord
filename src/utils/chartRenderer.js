@@ -4,10 +4,10 @@
 // attach it, instead of dumping the raw JSON. Unrecognized or unparseable
 // blocks are left in the text untouched so nothing silently vanishes.
 //
-// Shapes match fantasy_agent/graph.py's _personality_system prompt and
-// fantasy_agent/chart_render.py's renderer: "bar" (categories + series) and
-// "comparison" (rows of differently-scaled metrics).
-const SUPPORTED_TYPES = new Set(["bar", "comparison"]);
+// Shape matches fantasy_agent/graph.py's _personality_system prompt and
+// fantasy_agent/chart_render.py's renderer: a plain table, kept to one
+// shape deliberately - {type: "table", title, columns, rows}.
+const SUPPORTED_TYPES = new Set(["table"]);
 
 function extractChartBlocks(text) {
   const fenceRe = /```chart\s*\n([\s\S]*?)```/g;
