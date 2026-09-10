@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "the_fantasy_zone_discord",
+  "project_id": "61a06d27-fe91-45e1-bc3d-802fd8424349"
+}
