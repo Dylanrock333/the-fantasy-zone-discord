@@ -3,11 +3,10 @@ const { logger } = require("../utils/logger");
 const { askFantasyAgent, renderChartImage } = require("../utils/fantasyAgentClient");
 const { splitMessage } = require("../utils/splitMessage");
 const { extractChartBlocks } = require("../utils/chartRenderer");
+const { getServerConfig } = require("../config/servers");
 
 const name = Events.MessageCreate;
 const once = false;
-
-const FANTASY_CHAT_CHANNEL_ID = process.env.FANTASY_CHAT_CHANNEL_ID;
 
 // Pulls the bot's last N messages in this channel straight from Discord's
 // API, so we don't need to persist any history ourselves.
@@ -22,7 +21,10 @@ async function getRecentBotMessages(channel, beforeId, botId, count = 5, searchL
 async function execute(message) {
   if (message.author.bot) return;
 
-  const inFantasyChannel = message.channelId === FANTASY_CHAT_CHANNEL_ID;
+  const serverConfig = message.guildId ? getServerConfig(message.guildId) : undefined;
+  if (!serverConfig) return;
+
+  const inFantasyChannel = message.channelId === serverConfig.channelId;
   const mentioned = message.mentions.has(message.client.user);
   if (!inFantasyChannel && !mentioned) return;
 
@@ -50,7 +52,7 @@ async function execute(message) {
         "\n\n"
       : "";
 
-    const reply = await askFantasyAgent(message.author.id, contextBlock + content);
+    const reply = await askFantasyAgent(message.author.id, contextBlock + content, serverConfig.leagueId);
     const { text, charts } = extractChartBlocks(reply);
 
     const files = [];

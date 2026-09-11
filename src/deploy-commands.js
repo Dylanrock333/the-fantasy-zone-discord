@@ -3,8 +3,9 @@ const { REST, Routes } = require("discord.js");
 const { readdirSync } = require("node:fs");
 const path = require("node:path");
 const { logger } = require("./utils/logger");
+const { SERVERS } = require("./config/servers");
 
-const { DISCORD_TOKEN, DISCORD_CLIENT_ID, DISCORD_GUILD_ID } = process.env;
+const { DISCORD_TOKEN, DISCORD_CLIENT_ID } = process.env;
 
 if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
   throw new Error("DISCORD_TOKEN and DISCORD_CLIENT_ID must be set");
@@ -21,13 +22,14 @@ async function main() {
   }
 
   const rest = new REST().setToken(DISCORD_TOKEN);
+  const guildIds = Object.keys(SERVERS);
 
-  const route = DISCORD_GUILD_ID
-    ? Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID)
-    : Routes.applicationCommands(DISCORD_CLIENT_ID);
-
-  await rest.put(route, { body });
-  logger.info(`Deployed ${body.length} command(s)${DISCORD_GUILD_ID ? " to guild" : " globally"}.`);
+  // Guild-scoped registration propagates instantly (vs. up to an hour for
+  // global commands), so deploy separately to each configured server.
+  for (const guildId of guildIds) {
+    await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, guildId), { body });
+    logger.info(`Deployed ${body.length} command(s) to guild ${guildId}.`);
+  }
 }
 
 main().catch((err) => {
