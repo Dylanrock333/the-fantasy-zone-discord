@@ -7,33 +7,18 @@ async function askFantasyAgent(sessionId, message) {
     body: JSON.stringify({ session_id: sessionId, message }),
   });
 
-  if (!res.ok || !res.body) {
-    throw new Error(`fantasy agent request failed: ${res.status}`);
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    let sepIndex;
-    while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
-      const rawEvent = buffer.slice(0, sepIndex);
-      buffer = buffer.slice(sepIndex + 2);
-      const dataLine = rawEvent.split("\n").find((l) => l.startsWith("data: "));
-      if (!dataLine) continue;
-
-      const event = JSON.parse(dataLine.slice("data: ".length));
-      if (event.type === "done") return event.text;
-      if (event.type === "error") throw new Error(event.message);
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json()).detail || "";
+    } catch {
+      // response body wasn't JSON - fall through with no detail
     }
+    throw new Error(`fantasy agent request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
   }
 
-  throw new Error("fantasy agent stream ended without a done event");
+  const { reply } = await res.json();
+  return reply;
 }
 
 // Sends one parsed ```chart JSON object to fantasy-bot's renderer and gets
