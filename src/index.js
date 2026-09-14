@@ -8,6 +8,7 @@ const {
   loadModalHandlers,
   loadSelectHandlers,
 } = require("./utils/loaders");
+const { startScheduledJobs } = require("./jobs/scheduler");
 
 const { DISCORD_TOKEN } = process.env;
 
@@ -34,6 +35,7 @@ async function main() {
   await loadEvents(client);
 
   await client.login(DISCORD_TOKEN);
+  startScheduledJobs(client);
 }
 
 main().catch((err) => {
