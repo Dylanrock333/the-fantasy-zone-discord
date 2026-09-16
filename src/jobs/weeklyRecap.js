@@ -3,8 +3,8 @@ const { getWeeklyRecap } = require("../utils/fantasyAgentClient");
 const { splitMessage } = require("../utils/splitMessage");
 const { logger } = require("../utils/logger");
 
-// Posts one matchup-recap message per matchup, then a final league-summary
-// message, into the given guild's configured weekly-reports channel.
+// Posts the league-summary paragraph, then the power-ranking table, into the
+// given guild's configured weekly-reports channel.
 async function postWeeklyRecap(client, guildId) {
   const config = SERVERS[guildId];
   if (!config) throw new Error(`No server config for guild ${guildId}`);
@@ -13,21 +13,20 @@ async function postWeeklyRecap(client, guildId) {
   }
 
   const channel = await client.channels.fetch(config.weeklyReportsChannelId);
-  const { week, matchup_recaps, league_summary } = await getWeeklyRecap(config.leagueId);
+  const { week, league_summary, power_rankings } = await getWeeklyRecap(config.leagueId);
 
-  await channel.send(`**Week ${week} Recaps**`);
-  for (const m of matchup_recaps) {
-    const header = `**${m.home_team} vs ${m.away_team}** — winner: ${m.winner}`;
-    for (const chunk of splitMessage(`${header}\n${m.recap}`)) {
-      await channel.send(chunk);
-    }
-  }
-
-  for (const chunk of splitMessage(`**League Summary**\n${league_summary}`)) {
+  for (const chunk of splitMessage(`**Week ${week} League Summary**\n${league_summary}`)) {
     await channel.send(chunk);
   }
 
-  return { week, matchupCount: matchup_recaps.length };
+  const rankingsText = power_rankings
+    .map((r, i) => `**#${i + 1}** ${r.tag} — ${r.team}\n> ${r.blurb}`)
+    .join("\n\n");
+  for (const chunk of splitMessage(`**🏆 Power Rankings**\n\n${rankingsText}`)) {
+    await channel.send(chunk);
+  }
+
+  return { week, teamCount: power_rankings.length };
 }
 
 // Runs the recap for every configured guild; used by the scheduled cron job.
