@@ -52,7 +52,7 @@ async function execute(message) {
         "\n\n"
       : "";
 
-    const reply = await askFantasyAgent(message.author.id, contextBlock + content, serverConfig.leagueId);
+    const reply = await askFantasyAgent(contextBlock + content, serverConfig.leagueId);
     const { text, charts } = extractChartBlocks(reply);
 
     const files = [];
