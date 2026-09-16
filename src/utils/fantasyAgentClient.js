@@ -37,8 +37,9 @@ async function renderChartImage(chartData) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Runs the weekly recap graph for a league and returns per-matchup recaps
-// plus one league-wide summary. week=0 means "current week" server-side.
+// Runs the weekly recap graph for a league and returns one league-wide
+// summary plus a power ranking of every team. week=0 means "current week"
+// server-side.
 async function getWeeklyRecap(leagueId, week = 0) {
   const res = await fetch(`${FANTASY_AGENT_URL}/api/weekly-recap`, {
     method: "POST",
@@ -56,7 +57,7 @@ async function getWeeklyRecap(leagueId, week = 0) {
     throw new Error(`weekly recap request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
   }
 
-  return res.json(); // { week, matchup_recaps: [{home_team, away_team, winner, recap}], league_summary }
+  return res.json(); // { week, league_summary, power_rankings: [{team, tag, blurb}] }
 }
 
 module.exports = { askFantasyAgent, renderChartImage, getWeeklyRecap };
