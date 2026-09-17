@@ -57,7 +57,7 @@ async function getWeeklyRecap(leagueId, week = 0) {
     throw new Error(`weekly recap request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
   }
 
-  return res.json(); // { week, league_summary, power_rankings: [{team, tag, blurb}] }
+  return res.json(); // { week, league_summary, power_rankings: [{rank, team, tag}], power_ranking_image_base64 }
 }
 
 module.exports = { askFantasyAgent, renderChartImage, getWeeklyRecap };

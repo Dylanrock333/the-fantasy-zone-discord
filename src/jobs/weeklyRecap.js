@@ -1,10 +1,14 @@
 const { SERVERS } = require("../config/servers");
 const { getWeeklyRecap } = require("../utils/fantasyAgentClient");
 const { splitMessage } = require("../utils/splitMessage");
+const { base64ToAttachment } = require("../utils/imageUtils");
 const { logger } = require("../utils/logger");
 
-// Posts the league-summary paragraph, then the power-ranking table, into the
-// given guild's configured weekly-reports channel.
+// Posts the power-ranking graphic (if fantasy-bot generated one), then the
+// league-summary paragraph, into the given guild's configured
+// weekly-reports channel. If image generation failed server-side
+// (power_ranking_image_base64 is null), only the paragraph is posted - no
+// text fallback for the rankings.
 async function postWeeklyRecap(client, guildId) {
   const config = SERVERS[guildId];
   if (!config) throw new Error(`No server config for guild ${guildId}`);
@@ -13,16 +17,15 @@ async function postWeeklyRecap(client, guildId) {
   }
 
   const channel = await client.channels.fetch(config.weeklyReportsChannelId);
-  const { week, league_summary, power_rankings } = await getWeeklyRecap(config.leagueId);
+  const { week, league_summary, power_rankings, power_ranking_image_base64 } =
+    await getWeeklyRecap(config.leagueId);
 
-  for (const chunk of splitMessage(`**Week ${week} League Summary**\n${league_summary}`)) {
-    await channel.send(chunk);
+  if (power_ranking_image_base64) {
+    const attachment = base64ToAttachment(power_ranking_image_base64, `week-${week}-power-rankings.png`);
+    await channel.send({ files: [attachment] });
   }
 
-  const rankingsText = power_rankings
-    .map((r, i) => `**#${i + 1}** ${r.tag} — ${r.team}\n> ${r.blurb}`)
-    .join("\n\n");
-  for (const chunk of splitMessage(`**🏆 Power Rankings**\n\n${rankingsText}`)) {
+  for (const chunk of splitMessage(`**Week ${week} League Summary**\n${league_summary}`)) {
     await channel.send(chunk);
   }
 
