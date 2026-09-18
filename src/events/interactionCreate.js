@@ -1,4 +1,4 @@
-const { Events } = require("discord.js");
+const { Events, MessageFlags } = require("discord.js");
 const { logger } = require("../utils/logger");
 
 const name = Events.InteractionCreate;
@@ -28,7 +28,7 @@ async function execute(interaction) {
   } catch (err) {
     logger.error("Error handling interaction:", err);
     if (interaction.isRepliable()) {
-      const payload = { content: "Something went wrong.", ephemeral: true };
+      const payload = { content: "Something went wrong.", flags: MessageFlags.Ephemeral };
       try {
         if (interaction.replied || interaction.deferred) {
           await interaction.followUp(payload);

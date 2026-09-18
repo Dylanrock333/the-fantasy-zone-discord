@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
 
 const command = {
   data: new SlashCommandBuilder()
@@ -6,7 +6,7 @@ const command = {
     .setDescription("Delete the last 100 messages in this channel")
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
   async execute(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     // filterOld=true skips messages older than 14 days instead of throwing
     const deleted = await interaction.channel.bulkDelete(100, true);
