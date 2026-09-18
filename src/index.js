@@ -1,5 +1,5 @@
 require("dotenv/config");
-const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const { Client, Collection, GatewayIntentBits, Partials } = require("discord.js");
 const { logger } = require("./utils/logger");
 const {
   loadCommands,
@@ -22,6 +22,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
+  // Message/Channel partials so messageDelete still fires for the trade
+  // compare panel if it ages out of discord.js's message cache.
+  partials: [Partials.Message, Partials.Channel],
 });
 
 client.commands = new Collection();
