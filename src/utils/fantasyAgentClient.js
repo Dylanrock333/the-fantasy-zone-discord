@@ -90,4 +90,30 @@ async function getMatchupPreview(leagueId, week = 0, previousRecapContext = null
   return res.json(); // { week, league_preview, matchups: [{team_a, proj_a, record_a, team_b, proj_b, record_b, winner, margin}], matchup_image_base64 }
 }
 
-module.exports = { askFantasyAgent, renderChartImage, getWeeklyRecap, getMatchupPreview };
+// Runs the NFL-wide injury diff and returns alerts for fantasy-relevant
+// players who crossed the Active <-> Out/Injured-Reserve line since the
+// last check. Not league-scoped in practice today (all guilds share one
+// league), but the endpoint still takes league_id for the ownership-%
+// lookup, same as every other fantasy-bot endpoint.
+async function checkInjuries(leagueId) {
+  const res = await fetch(`${FANTASY_AGENT_URL}/api/injury-check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ league_id: leagueId }),
+  });
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json()).detail || "";
+    } catch {
+      // response body wasn't JSON - fall through with no detail
+    }
+    throw new Error(`injury check request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
+  }
+
+  const { alerts } = await res.json();
+  return alerts; // [{name, pro_team, status, previous_status, injury_type, comment, percent_owned, news_link}]
+}
+
+module.exports = { askFantasyAgent, renderChartImage, getWeeklyRecap, getMatchupPreview, checkInjuries };
