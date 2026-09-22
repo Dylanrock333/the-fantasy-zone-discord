@@ -1,7 +1,6 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { getServerConfig } = require("../config/servers");
 const { getLeaderboard } = require("../utils/fantasyAgentClient");
-const { sendChunked } = require("../utils/splitMessage");
 const { runForAllGuilds } = require("../utils/guildJobs");
 
 const POSITION_LABELS = { QB: "QB", RB: "RB", WR: "WR", TE: "TE", K: "K", "D/ST": "DEF" };
@@ -41,16 +40,6 @@ async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size
   const text = `**${POSITION_LABELS[position] || position} Leaderboard — Ranked by ${SORT_LABELS[sortBy] || sortBy} (Top ${players.length})**\n${lines.join("\n")}`;
 
   return { text, count: players.length };
-}
-
-// Posts the leaderboard for `position` straight into the guild's configured
-// leaderboard channel. Used by the /leaderboard command.
-async function postLeaderboard(client, guildId, position, size = DEFAULT_SIZE, sortBy = DEFAULT_SORT) {
-  const config = getServerConfig(guildId, "leaderboardChannelId");
-  const channel = await client.channels.fetch(config.leaderboardChannelId);
-  const { text, count } = await getLeaderboardData(guildId, position, sortBy, size);
-  await sendChunked(channel, text);
-  return { position, label: POSITION_LABELS[position] || position, sortLabel: SORT_LABELS[sortBy] || sortBy, count };
 }
 
 // Used by the Search button: fetches the leaderboard and edits the panel
@@ -154,7 +143,7 @@ async function ensureLeaderboardPanelForAllGuilds(client) {
 }
 
 module.exports = {
-  postLeaderboard,
+  getLeaderboardData,
   postLeaderboardPanel,
   ensureLeaderboardPanel,
   ensureLeaderboardPanelForAllGuilds,
@@ -164,4 +153,5 @@ module.exports = {
   setPending,
   SORT_LABELS,
   DEFAULT_SORT,
+  DEFAULT_SIZE,
 };

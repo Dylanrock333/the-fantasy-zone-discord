@@ -1,12 +1,13 @@
-const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
-const { postLeaderboard, SORT_LABELS, DEFAULT_SORT } = require("../jobs/leaderboard");
+const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
+const { getLeaderboardData, SORT_LABELS, DEFAULT_SORT, DEFAULT_SIZE } = require("../jobs/leaderboard");
+const { splitMessage } = require("../utils/splitMessage");
 
-// Manual trigger for posting a position leaderboard into the leaderboard
-// channel. Admin-only since it posts into that channel for real.
+// Manual trigger for posting a position leaderboard into the channel the
+// command was run in. Admin-only to avoid spam.
 const command = {
   data: new SlashCommandBuilder()
     .setName("leaderboard")
-    .setDescription("Post the top fantasy players at a position into the leaderboard channel")
+    .setDescription("Post the top fantasy players at a position in this channel")
     .addStringOption((option) =>
       option
         .setName("position")
@@ -32,19 +33,17 @@ const command = {
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   async execute(interaction) {
-    await interaction.reply({ content: "Running leaderboard...", flags: MessageFlags.Ephemeral });
+    await interaction.deferReply();
     const position = interaction.options.getString("position", true);
-    const count = interaction.options.getInteger("count") ?? 15;
+    const count = interaction.options.getInteger("count") ?? DEFAULT_SIZE;
     const sortBy = interaction.options.getString("sort") ?? DEFAULT_SORT;
     try {
-      const { label, sortLabel, count: postedCount } = await postLeaderboard(
-        interaction.client,
-        interaction.guildId,
-        position,
-        count,
-        sortBy
-      );
-      await interaction.editReply(`Posted ${label} leaderboard ranked by ${sortLabel} (${postedCount} players).`);
+      const { text } = await getLeaderboardData(interaction.guildId, position, sortBy, count);
+      const [first, ...rest] = splitMessage(text);
+      await interaction.editReply(first);
+      for (const chunk of rest) {
+        await interaction.followUp(chunk);
+      }
     } catch (err) {
       await interaction.editReply(`Leaderboard failed: ${err.message}`);
     }
