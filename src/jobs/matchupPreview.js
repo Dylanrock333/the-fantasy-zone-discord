@@ -1,7 +1,8 @@
-const { SERVERS } = require("../config/servers");
+const { getServerConfig } = require("../config/servers");
 const { getMatchupPreview } = require("../utils/fantasyAgentClient");
-const { splitMessage } = require("../utils/splitMessage");
+const { sendChunked } = require("../utils/splitMessage");
 const { base64ToAttachment } = require("../utils/imageUtils");
+const { runForAllGuilds } = require("../utils/guildJobs");
 const { logger } = require("../utils/logger");
 
 // Finds the most recent text message this bot posted in the guild's
@@ -23,12 +24,7 @@ async function getLastRecapSummary(client, config) {
 // (matchup_image_base64 is null), only the paragraph is posted - no text
 // fallback for the matchup table.
 async function postMatchupPreview(client, guildId) {
-  const config = SERVERS[guildId];
-  if (!config) throw new Error(`No server config for guild ${guildId}`);
-  if (!config.matchupChannelId) {
-    throw new Error(`No matchupChannelId configured for guild ${guildId}`);
-  }
-
+  const config = getServerConfig(guildId, "matchupChannelId");
   const channel = await client.channels.fetch(config.matchupChannelId);
 
   let previousRecapContext = null;
@@ -46,9 +42,7 @@ async function postMatchupPreview(client, guildId) {
     await channel.send({ files: [attachment] });
   }
 
-  for (const chunk of splitMessage(`**Week ${week} Matchups Ahead**\n${league_preview}`)) {
-    await channel.send(chunk);
-  }
+  await sendChunked(channel, `**Week ${week} Matchups Ahead**\n${league_preview}`);
 
   return { week, matchupCount: matchups.length };
 }
@@ -56,13 +50,7 @@ async function postMatchupPreview(client, guildId) {
 // Runs the matchup preview for every configured guild; used by the
 // scheduled cron job.
 async function postMatchupPreviewForAllGuilds(client) {
-  for (const guildId of Object.keys(SERVERS)) {
-    try {
-      await postMatchupPreview(client, guildId);
-    } catch (err) {
-      logger.error(`Matchup preview failed for guild ${guildId}:`, err);
-    }
-  }
+  await runForAllGuilds(client, postMatchupPreview, "Matchup preview");
 }
 
 module.exports = { postMatchupPreview, postMatchupPreviewForAllGuilds };

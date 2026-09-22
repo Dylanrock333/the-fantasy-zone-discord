@@ -1,8 +1,8 @@
-const { SERVERS } = require("../config/servers");
+const { getServerConfig } = require("../config/servers");
 const { getWeeklyRecap } = require("../utils/fantasyAgentClient");
-const { splitMessage } = require("../utils/splitMessage");
+const { sendChunked } = require("../utils/splitMessage");
 const { base64ToAttachment } = require("../utils/imageUtils");
-const { logger } = require("../utils/logger");
+const { runForAllGuilds } = require("../utils/guildJobs");
 
 // Posts the power-ranking graphic (if fantasy-bot generated one), then the
 // league-summary paragraph, into the given guild's configured
@@ -10,12 +10,7 @@ const { logger } = require("../utils/logger");
 // (power_ranking_image_base64 is null), only the paragraph is posted - no
 // text fallback for the rankings.
 async function postWeeklyRecap(client, guildId) {
-  const config = SERVERS[guildId];
-  if (!config) throw new Error(`No server config for guild ${guildId}`);
-  if (!config.weeklyReportsChannelId) {
-    throw new Error(`No weeklyReportsChannelId configured for guild ${guildId}`);
-  }
-
+  const config = getServerConfig(guildId, "weeklyReportsChannelId");
   const channel = await client.channels.fetch(config.weeklyReportsChannelId);
   const { week, league_summary, power_rankings, power_ranking_image_base64 } =
     await getWeeklyRecap(config.leagueId);
@@ -25,22 +20,14 @@ async function postWeeklyRecap(client, guildId) {
     await channel.send({ files: [attachment] });
   }
 
-  for (const chunk of splitMessage(`**Week ${week} League Summary**\n${league_summary}`)) {
-    await channel.send(chunk);
-  }
+  await sendChunked(channel, `**Week ${week} League Summary**\n${league_summary}`);
 
   return { week, teamCount: power_rankings.length };
 }
 
 // Runs the recap for every configured guild; used by the scheduled cron job.
 async function postWeeklyRecapForAllGuilds(client) {
-  for (const guildId of Object.keys(SERVERS)) {
-    try {
-      await postWeeklyRecap(client, guildId);
-    } catch (err) {
-      logger.error(`Weekly recap failed for guild ${guildId}:`, err);
-    }
-  }
+  await runForAllGuilds(client, postWeeklyRecap, "Weekly recap");
 }
 
 module.exports = { postWeeklyRecap, postWeeklyRecapForAllGuilds };
