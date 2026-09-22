@@ -1,11 +1,13 @@
-const { setPending, buildPanelComponents, getPending } = require("../../jobs/leaderboard");
+const { setPending, buildPanelComponents, getPending, prefetchLeaderboard } = require("../../jobs/leaderboard");
 
 const handler = {
   customId: "leaderboard-count-select",
   async execute(interaction) {
     const [size] = interaction.values;
     setPending(interaction.guildId, { size: Number(size) });
-    await interaction.update({ components: buildPanelComponents(getPending(interaction.guildId)) });
+    const pending = getPending(interaction.guildId);
+    await interaction.update({ components: buildPanelComponents(pending) });
+    prefetchLeaderboard(interaction.guildId, pending);
   },
 };
 

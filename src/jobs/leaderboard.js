@@ -21,6 +21,8 @@ const STAT_FORMATTERS = {
 const DEFAULT_SORT = "points";
 const DEFAULT_SIZE = 15;
 const COUNT_OPTIONS = [5, 10, 15, 20, 25];
+const MAX_SIZE = Math.max(...COUNT_OPTIONS);
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 // Remembers each guild panel's queued (not-yet-searched) position/sort
 // choice (the data isn't per-user, so one shared value per guild is
@@ -31,10 +33,38 @@ const pendingByGuild = new Map();
 const getPending = (guildId) => pendingByGuild.get(guildId) || {};
 const setPending = (guildId, updates) => pendingByGuild.set(guildId, { ...getPending(guildId), ...updates });
 
+// Short-lived cache of fantasy-bot leaderboard responses, keyed by
+// league/position/sort. Always fetches MAX_SIZE players and slices, so
+// changing the "how many" pick never costs another round trip. Stores the
+// promise itself so a Search pressed while a prefetch is still in flight
+// just awaits that same request.
+const playersCache = new Map();
+
+function fetchPlayers(leagueId, position, sortBy) {
+  const key = `${leagueId}:${position}:${sortBy}`;
+  const cached = playersCache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.promise;
+
+  const promise = getLeaderboard(leagueId, position, MAX_SIZE, sortBy).then((res) => res.players);
+  promise.catch(() => playersCache.delete(key));
+  playersCache.set(key, { promise, at: Date.now() });
+  return promise;
+}
+
+// Warms the cache for the panel's current picks as soon as a select
+// changes, so the fetch is usually done by the time Search is pressed.
+function prefetchLeaderboard(guildId, { position, sortBy } = {}) {
+  if (!position) return;
+  // Best-effort: any real error surfaces when Search is pressed.
+  try {
+    fetchPlayers(getServerConfig(guildId).leagueId, position, sortBy || DEFAULT_SORT).catch(() => {});
+  } catch {}
+}
+
 // Fetches and formats the top players at `position`, ranked by `sortBy`.
 async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size = DEFAULT_SIZE) {
   const config = getServerConfig(guildId);
-  const { players } = await getLeaderboard(config.leagueId, position, size, sortBy);
+  const players = (await fetchPlayers(config.leagueId, position, sortBy)).slice(0, size);
 
   const format = STAT_FORMATTERS[sortBy] || STAT_FORMATTERS[DEFAULT_SORT];
   const lines = players.map((p) => `**${p.rank}\\. ${p.name}** (${p.pro_team})\n${format(p)} — ${p.owner_team_name || "Free Agent"}`);
@@ -45,18 +75,30 @@ async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size
 
 // Used by the Search button: fetches the leaderboard and edits the panel
 // message itself in place (rather than replying), so each new search
-// replaces the last result instead of stacking new messages. Omitting
-// `components` leaves the select menus and button on the message untouched.
+// replaces the last result instead of stacking new messages. The panel is
+// first flipped into a loading state (status line + disabled "Loading…"
+// button, which also blocks double-clicks), then restored with the result.
 async function replyLeaderboard(interaction, position, sortBy, size) {
-  await interaction.deferUpdate();
-  const { text } = await getLeaderboardData(interaction.guildId, position, sortBy, size);
-  await interaction.editReply({ content: text });
+  const pending = getPending(interaction.guildId);
+  await interaction.update({
+    content: `Loading **${POSITION_LABELS[position] || position}** leaderboard — ranked by ${SORT_LABELS[sortBy] || sortBy}…`,
+    components: buildPanelComponents(pending, { loading: true }),
+  });
+
+  let content;
+  try {
+    ({ text: content } = await getLeaderboardData(interaction.guildId, position, sortBy, size));
+  } catch (err) {
+    content = `Leaderboard failed: ${err.message}`;
+  }
+  await interaction.editReply({ content, components: buildPanelComponents(pending) });
 }
 
 // Builds the position/sort select rows plus the Search button. Whichever
 // option matches `pending` is marked default, so the dropdown itself shows
 // the current pick (instead of resetting to its placeholder) once closed.
-function buildPanelComponents(pending = {}) {
+// `loading` disables the Search button and relabels it while a search runs.
+function buildPanelComponents(pending = {}, { loading = false } = {}) {
   const positionRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("leaderboard-position-select")
@@ -93,7 +135,11 @@ function buildPanelComponents(pending = {}) {
   );
 
   const searchRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId("leaderboard-search-button").setLabel("Search").setStyle(ButtonStyle.Primary)
+    new ButtonBuilder()
+      .setCustomId("leaderboard-search-button")
+      .setLabel(loading ? "Loading…" : "Search")
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(loading)
   );
 
   return [positionRow, sortRow, countRow, searchRow];
@@ -164,6 +210,7 @@ module.exports = {
   ensureLeaderboardPanel,
   ensureLeaderboardPanelForAllGuilds,
   replyLeaderboard,
+  prefetchLeaderboard,
   buildPanelComponents,
   getPending,
   setPending,
