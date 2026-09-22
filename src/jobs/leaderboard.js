@@ -20,6 +20,7 @@ const STAT_FORMATTERS = {
 };
 const DEFAULT_SORT = "points";
 const DEFAULT_SIZE = 15;
+const COUNT_OPTIONS = [5, 10, 15, 20, 25];
 
 // Remembers each guild panel's queued (not-yet-searched) position/sort
 // choice (the data isn't per-user, so one shared value per guild is
@@ -46,9 +47,9 @@ async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size
 // message itself in place (rather than replying), so each new search
 // replaces the last result instead of stacking new messages. Omitting
 // `components` leaves the select menus and button on the message untouched.
-async function replyLeaderboard(interaction, position, sortBy) {
+async function replyLeaderboard(interaction, position, sortBy, size) {
   await interaction.deferUpdate();
-  const { text } = await getLeaderboardData(interaction.guildId, position, sortBy);
+  const { text } = await getLeaderboardData(interaction.guildId, position, sortBy, size);
   await interaction.editReply({ content: text });
 }
 
@@ -78,11 +79,24 @@ function buildPanelComponents(pending = {}) {
       )
   );
 
+  const countRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("leaderboard-count-select")
+      .setPlaceholder("Choose how many")
+      .addOptions(
+        COUNT_OPTIONS.map((size) => ({
+          label: `Top ${size}`,
+          value: String(size),
+          default: size === (pending.size || DEFAULT_SIZE),
+        }))
+      )
+  );
+
   const searchRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("leaderboard-search-button").setLabel("Search").setStyle(ButtonStyle.Primary)
   );
 
-  return [positionRow, sortRow, searchRow];
+  return [positionRow, sortRow, countRow, searchRow];
 }
 
 // Posts the interactive position/ranked-by/search menu into the guild's
@@ -129,8 +143,10 @@ async function ensureLeaderboardPanel(client, guildId) {
 
   const isCurrent =
     hasComponent(panelMessage, "leaderboard-search-button") &&
+    hasComponent(panelMessage, "leaderboard-count-select") &&
     sameValues(selectOptionValues(panelMessage, "leaderboard-position-select"), Object.keys(POSITION_LABELS).sort()) &&
-    sameValues(selectOptionValues(panelMessage, "leaderboard-sort-select"), Object.keys(SORT_LABELS).sort());
+    sameValues(selectOptionValues(panelMessage, "leaderboard-sort-select"), Object.keys(SORT_LABELS).sort()) &&
+    sameValues(selectOptionValues(panelMessage, "leaderboard-count-select"), COUNT_OPTIONS.map(String).sort());
 
   if (!isCurrent) {
     await panelMessage.edit({ components: buildPanelComponents(getPending(guildId)) });
