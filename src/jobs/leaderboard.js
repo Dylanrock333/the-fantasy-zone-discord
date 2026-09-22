@@ -37,7 +37,7 @@ async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size
   const { players } = await getLeaderboard(config.leagueId, position, size, sortBy);
 
   const format = STAT_FORMATTERS[sortBy] || STAT_FORMATTERS[DEFAULT_SORT];
-  const lines = players.map((p) => `${p.rank}. **${p.name}** (${p.pro_team}) — ${format(p)} — ${p.owner_team_name || "Free Agent"}`);
+  const lines = players.map((p) => `**${p.rank}\\. ${p.name}** (${p.pro_team})\n${format(p)} — ${p.owner_team_name || "Free Agent"}`);
   const text = `**${POSITION_LABELS[position] || position} Leaderboard — Ranked by ${SORT_LABELS[sortBy] || sortBy} (Top ${players.length})**\n${lines.join("\n")}`;
 
   return { text, count: players.length };
