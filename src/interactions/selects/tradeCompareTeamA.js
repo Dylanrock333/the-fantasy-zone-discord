@@ -18,13 +18,15 @@ const handler = {
       return;
     }
 
+    // Ack within Discord's 3s window before the roster fetch, which can be slower.
+    await interaction.deferUpdate();
     try {
       const { id, name, players } = await getTeamPlayers(session.leagueId, teamId);
       updateSession(interaction.message.id, { teamA: { id, name }, rosterA: players, selectedA: [] });
-      await interaction.update(renderPanel(session));
+      await interaction.editReply(renderPanel(session));
     } catch (err) {
       logger.error("trade compare: failed to load team A roster:", err);
-      await interaction.update(renderPanel(session, { error: "Could not load that team's roster - try again." }));
+      await interaction.editReply(renderPanel(session, { error: "Could not load that team's roster - try again." }));
     }
   },
 };
