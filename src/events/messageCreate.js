@@ -4,6 +4,7 @@ const { logger } = require("../utils/logger");
 const { askFantasyAgent, renderChartImage } = require("../utils/fantasyAgentClient");
 const { splitMessage } = require("../utils/splitMessage");
 const { extractChartBlocks } = require("../utils/chartRenderer");
+const { withTyping } = require("../utils/typingIndicator");
 const { getServerConfig } = require("../config/servers");
 
 const name = Events.MessageCreate;
@@ -34,58 +35,52 @@ async function execute(message) {
     : message.content.trim();
   if (!content) return;
 
-  await message.channel.sendTyping();
-  // Typing indicator expires after ~10s; keep refreshing it while the agent call runs.
-  const typingInterval = setInterval(() => {
-    message.channel.sendTyping().catch(() => {});
-  }, 8000);
-
   try {
-    const recentBotMessages = await getRecentBotMessages(
-      message.channel,
-      message.id,
-      message.client.user.id
-    );
-    const contextBlock = recentBotMessages.length
-      ? `Context (my last ${recentBotMessages.length} messages in this channel):\n` +
-        recentBotMessages.map((m) => `- ${m.content}`).join("\n") +
-        "\n\n"
-      : "";
+    await withTyping(message.channel, async () => {
+      const recentBotMessages = await getRecentBotMessages(
+        message.channel,
+        message.id,
+        message.client.user.id
+      );
+      const contextBlock = recentBotMessages.length
+        ? `Context (my last ${recentBotMessages.length} messages in this channel):\n` +
+          recentBotMessages.map((m) => `- ${m.content}`).join("\n") +
+          "\n\n"
+        : "";
 
-    const reply = await askFantasyAgent(contextBlock + content, serverConfig.leagueId, message.channelId);
-    const { text, charts } = extractChartBlocks(reply);
+      const reply = await askFantasyAgent(contextBlock + content, serverConfig.leagueId, message.channelId);
+      const { text, charts } = extractChartBlocks(reply);
 
-    // Render each chart block to a PNG; fall back to attaching the raw JSON if rendering fails.
-    const files = [];
-    for (let i = 0; i < charts.length; i++) {
-      const chart = charts[i];
-      const name = (chart.title || `chart-${i + 1}`).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-      try {
-        files.push({ attachment: await renderChartImage(chart), name: `${name}.png` });
-      } catch (err) {
-        logger.error("chart image render failed:", err);
-        files.push({
-          attachment: Buffer.from(JSON.stringify(chart, null, 2), "utf8"),
-          name: `${name}.json`,
-        });
+      // Render each chart block to a PNG; fall back to attaching the raw JSON if rendering fails.
+      const files = [];
+      for (let i = 0; i < charts.length; i++) {
+        const chart = charts[i];
+        const name = (chart.title || `chart-${i + 1}`).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+        try {
+          files.push({ attachment: await renderChartImage(chart), name: `${name}.png` });
+        } catch (err) {
+          logger.error("chart image render failed:", err);
+          files.push({
+            attachment: Buffer.from(JSON.stringify(chart, null, 2), "utf8"),
+            name: `${name}.json`,
+          });
+        }
       }
-    }
 
-    // Send the text in chunks, attaching any chart files to the last one (or alone if there's no text).
-    const chunks = text ? splitMessage(text) : [];
-    if (!chunks.length && files.length) {
-      await message.reply({ files });
-    } else {
-      for (let i = 0; i < chunks.length; i++) {
-        const isLast = i === chunks.length - 1;
-        await message.reply(isLast && files.length ? { content: chunks[i], files } : chunks[i]);
+      // Send the text in chunks, attaching any chart files to the last one (or alone if there's no text).
+      const chunks = text ? splitMessage(text) : [];
+      if (!chunks.length && files.length) {
+        await message.reply({ files });
+      } else {
+        for (let i = 0; i < chunks.length; i++) {
+          const isLast = i === chunks.length - 1;
+          await message.reply(isLast && files.length ? { content: chunks[i], files } : chunks[i]);
+        }
       }
-    }
+    });
   } catch (err) {
     logger.error("fantasy agent error:", err);
     await message.reply("Something went wrong talking to the fantasy agent.");
-  } finally {
-    clearInterval(typingInterval);
   }
 }
 

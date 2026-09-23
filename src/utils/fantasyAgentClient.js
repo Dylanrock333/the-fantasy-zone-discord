@@ -94,4 +94,48 @@ async function getLeaderboard(leagueId, position, size = 15, sortBy = "points") 
   return res.json(); // { position, players: [{rank, name, pro_team, total_points, avg_points, projected_total_points, percent_owned, owner_team_name}] }
 }
 
-module.exports = { askFantasyAgent, renderChartImage, getWeeklyRecap, getMatchupPreview, getLeaderboard };
+// Lists a league's teams (id + name), used to populate the trade-compare
+// panel's team select menus.
+async function getLeagueTeams(leagueId) {
+  const res = await fetch(`${FANTASY_AGENT_URL}/api/league/${leagueId}/teams`);
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json()).detail || "";
+    } catch {
+      // response body wasn't JSON - fall through with no detail
+    }
+    throw new Error(`league teams request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
+  }
+
+  return res.json(); // { teams: [{ id, name }] }
+}
+
+// Lists a team's roster, used to populate the trade-compare panel's player
+// select menus once a team has been picked.
+async function getTeamPlayers(leagueId, teamId) {
+  const res = await fetch(`${FANTASY_AGENT_URL}/api/league/${leagueId}/teams/${teamId}/players`);
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json()).detail || "";
+    } catch {
+      // response body wasn't JSON - fall through with no detail
+    }
+    throw new Error(`team players request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
+  }
+
+  return res.json(); // { id, name, players: [{ id, name, position, proTeam }] }
+}
+
+module.exports = {
+  askFantasyAgent,
+  renderChartImage,
+  getWeeklyRecap,
+  getMatchupPreview,
+  getLeaderboard,
+  getLeagueTeams,
+  getTeamPlayers,
+};
