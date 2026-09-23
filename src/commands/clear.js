@@ -1,3 +1,4 @@
+// /clear: bulk-deletes the channel's last 100 messages (mods only).
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
 
 const command = {

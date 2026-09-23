@@ -1,8 +1,7 @@
+// /weeklyrecap: runs the weekly recap on demand, outside the Tuesday cron (admin-only).
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
 const { postWeeklyRecap } = require("../jobs/weeklyRecap");
 
-// Manual trigger for testing the weekly recap without waiting for the cron
-// job. Admin-only since it posts into the weekly-reports channel for real.
 const command = {
   data: new SlashCommandBuilder()
     .setName("weeklyrecap")

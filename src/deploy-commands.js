@@ -1,3 +1,4 @@
+// One-off script: registers every slash command in src/commands with each configured guild.
 require("dotenv/config");
 const { REST, Routes } = require("discord.js");
 const { readdirSync } = require("node:fs");
@@ -24,8 +25,7 @@ async function main() {
   const rest = new REST().setToken(DISCORD_TOKEN);
   const guildIds = Object.keys(SERVERS);
 
-  // Guild-scoped registration propagates instantly (vs. up to an hour for
-  // global commands), so deploy separately to each configured server.
+  // Guild-scoped commands update instantly (global ones can take an hour), so register per guild.
   for (const guildId of guildIds) {
     await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, guildId), { body });
     logger.info(`Deployed ${body.length} command(s) to guild ${guildId}.`);

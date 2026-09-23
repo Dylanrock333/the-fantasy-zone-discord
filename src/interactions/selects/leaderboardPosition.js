@@ -1,3 +1,4 @@
+// Leaderboard panel position select: stores the pick, redraws the panel, and prefetches results.
 const { setPending, buildPanelComponents, getPending, prefetchLeaderboard } = require("../../jobs/leaderboard");
 
 const handler = {

@@ -1,3 +1,4 @@
+// Thursday matchup preview: scoreboard image plus look-ahead summary, posted to each guild's matchup channel.
 const { getServerConfig } = require("../config/servers");
 const { getMatchupPreview } = require("../utils/fantasyAgentClient");
 const { sendChunked } = require("../utils/splitMessage");
@@ -5,11 +6,7 @@ const { base64ToAttachment } = require("../utils/imageUtils");
 const { runForAllGuilds } = require("../utils/guildJobs");
 const { logger } = require("../utils/logger");
 
-// Finds the most recent text message this bot posted in the guild's
-// weekly-reports channel - i.e. the summary paragraph from the last
-// weekly recap - to use as prior context for the matchup preview prompt.
-// Returns null if there's no weekly-reports channel configured or no
-// matching message.
+// Returns the bot's latest weekly-recap summary text (prior context for the preview), or null.
 async function getLastRecapSummary(client, config) {
   if (!config.weeklyReportsChannelId) return null;
   const channel = await client.channels.fetch(config.weeklyReportsChannelId);
@@ -18,15 +15,12 @@ async function getLastRecapSummary(client, config) {
   return lastSummary ? lastSummary.content : null;
 }
 
-// Posts the matchup scoreboard graphic (if fantasy-bot generated one), then
-// the look-ahead summary paragraph, into the given guild's configured
-// matchup channel. If image generation failed server-side
-// (matchup_image_base64 is null), only the paragraph is posted - no text
-// fallback for the matchup table.
+// Posts the matchup image (if fantasy-bot produced one) and the preview text to the guild's matchup channel.
 async function postMatchupPreview(client, guildId) {
   const config = getServerConfig(guildId, "matchupChannelId");
   const channel = await client.channels.fetch(config.matchupChannelId);
 
+  // Recap context is optional; a failure here shouldn't block the preview.
   let previousRecapContext = null;
   try {
     previousRecapContext = await getLastRecapSummary(client, config);
@@ -47,8 +41,7 @@ async function postMatchupPreview(client, guildId) {
   return { week, matchupCount: matchups.length };
 }
 
-// Runs the matchup preview for every configured guild; used by the
-// scheduled cron job.
+// Runs the matchup preview for every configured guild (cron).
 async function postMatchupPreviewForAllGuilds(client) {
   await runForAllGuilds(client, postMatchupPreview, "Matchup preview");
 }

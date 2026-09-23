@@ -1,3 +1,4 @@
+// /demo: sample message showing the example button, select and modal handlers.
 const {
   SlashCommandBuilder,
   ActionRowBuilder,

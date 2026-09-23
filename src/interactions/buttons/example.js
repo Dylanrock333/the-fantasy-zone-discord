@@ -1,3 +1,4 @@
+// Demo button handler (from /demo).
 const { MessageFlags } = require("discord.js");
 
 const handler = {

@@ -1,8 +1,7 @@
+// /matchup-preview: runs the matchup preview on demand, outside the Thursday cron (admin-only).
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require("discord.js");
 const { postMatchupPreview } = require("../jobs/matchupPreview");
 
-// Manual trigger for running the matchup preview on demand, outside the
-// Thursday cron. Admin-only since it posts into the matchup channel for real.
 const command = {
   data: new SlashCommandBuilder()
     .setName("matchup-preview")

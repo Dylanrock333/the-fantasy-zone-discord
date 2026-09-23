@@ -1,3 +1,4 @@
+// Leaderboard panel Search button: runs the search for the guild's pending picks.
 const { MessageFlags } = require("discord.js");
 const { getPending, replyLeaderboard, DEFAULT_SORT, DEFAULT_SIZE } = require("../../jobs/leaderboard");
 

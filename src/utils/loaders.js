@@ -1,3 +1,4 @@
+// Loads commands, events and interaction handlers from their src/ folders at startup.
 const { readdirSync } = require("node:fs");
 const path = require("node:path");
 const { Collection } = require("discord.js");
@@ -7,6 +8,7 @@ function jsFiles(dir) {
   return readdirSync(dir).filter((f) => f.endsWith(".js"));
 }
 
+// Registers each command file on client.commands by name.
 async function loadCommands(client) {
   const dir = path.join(__dirname, "..", "commands");
   for (const file of jsFiles(dir)) {
@@ -19,6 +21,7 @@ async function loadCommands(client) {
   }
 }
 
+// Binds each event file to the client (once or on).
 async function loadEvents(client) {
   const dir = path.join(__dirname, "..", "events");
   for (const file of jsFiles(dir)) {
@@ -35,6 +38,7 @@ async function loadEvents(client) {
   }
 }
 
+// Collects button/modal/select handlers from interactions/<subdir>, keyed by customId.
 function loadInteractionHandlers(subdir) {
   const collection = new Collection();
   const dir = path.join(__dirname, "..", "interactions", subdir);

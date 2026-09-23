@@ -1,3 +1,4 @@
+// Bot entry point: loads handlers, logs in, and starts the scheduled jobs.
 require("dotenv/config");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const { logger } = require("./utils/logger");

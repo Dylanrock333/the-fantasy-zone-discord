@@ -1,9 +1,11 @@
+// Routes slash commands, buttons, modals and selects to their loaded handlers.
 const { Events, MessageFlags } = require("discord.js");
 const { logger } = require("../utils/logger");
 
 const name = Events.InteractionCreate;
 const once = false;
 
+// Dispatches by interaction type; any handler error gets a generic ephemeral reply.
 async function execute(interaction) {
   const client = interaction.client;
 
@@ -27,6 +29,7 @@ async function execute(interaction) {
     }
   } catch (err) {
     logger.error("Error handling interaction:", err);
+    // Use followUp if the handler already replied/deferred, otherwise a fresh reply.
     if (interaction.isRepliable()) {
       const payload = { content: "Something went wrong.", flags: MessageFlags.Ephemeral };
       try {

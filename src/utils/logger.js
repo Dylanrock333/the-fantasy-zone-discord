@@ -1,3 +1,4 @@
+// Minimal console logger with level prefixes.
 const logger = {
   info: (...args) => console.log("[INFO]", ...args),
   warn: (...args) => console.warn("[WARN]", ...args),

@@ -1,3 +1,4 @@
+// Demo button that opens the example modal.
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 
 const handler = {

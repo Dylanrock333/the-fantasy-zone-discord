@@ -1,17 +1,17 @@
+// Cron schedules for the weekly recap and matchup preview jobs.
 const cron = require("node-cron");
 const { logger } = require("../utils/logger");
 const { postWeeklyRecapForAllGuilds } = require("./weeklyRecap");
 const { postMatchupPreviewForAllGuilds } = require("./matchupPreview");
 
-// "0 0 * * 2" = every Tuesday at 00:00 - i.e. right after Monday Night
-// Football wraps, before the new week's games start.
+// Tuesday 00:00, after Monday Night Football.
 const WEEKLY_RECAP_CRON = "0 0 * * 2";
 
-// "0 17 * * 4" = every Thursday at 17:00 Central - ahead of Thursday Night
-// Football kickoff.
+// Thursday 17:00 Central, before Thursday Night Football.
 const MATCHUP_PREVIEW_CRON = "0 17 * * 4";
 const MATCHUP_PREVIEW_TZ = "America/Chicago";
 
+// Registers both cron jobs; failures are logged, never thrown.
 function startScheduledJobs(client) {
   cron.schedule(WEEKLY_RECAP_CRON, () => {
     logger.info("Running scheduled weekly recap...");

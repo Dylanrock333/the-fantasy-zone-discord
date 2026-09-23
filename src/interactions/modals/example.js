@@ -1,3 +1,4 @@
+// Demo modal submit handler: echoes the entered text.
 const { MessageFlags } = require("discord.js");
 
 const handler = {

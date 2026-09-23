@@ -1,3 +1,4 @@
+// /ping: basic liveness check.
 const { SlashCommandBuilder } = require("discord.js");
 
 const command = {

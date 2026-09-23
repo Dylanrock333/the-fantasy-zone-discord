@@ -1,3 +1,4 @@
+// Chat bridge: forwards messages in the fantasy channel (or @mentions) to the fantasy agent and replies.
 const { Events } = require("discord.js");
 const { logger } = require("../utils/logger");
 const { askFantasyAgent, renderChartImage } = require("../utils/fantasyAgentClient");
@@ -8,8 +9,7 @@ const { getServerConfig } = require("../config/servers");
 const name = Events.MessageCreate;
 const once = false;
 
-// Pulls the bot's last N messages in this channel straight from Discord's
-// API, so we don't need to persist any history ourselves.
+// Fetches the bot's recent messages in the channel to use as chat context (no history stored locally).
 async function getRecentBotMessages(channel, beforeId, botId, count = 5, searchLimit = 10) {
   const fetched = await channel.messages.fetch({ limit: searchLimit, before: beforeId });
   return [...fetched.values()]
@@ -18,6 +18,7 @@ async function getRecentBotMessages(channel, beforeId, botId, count = 5, searchL
     .slice(-count);
 }
 
+// Handles one user message: build context, ask the agent, render charts, send the reply.
 async function execute(message) {
   if (message.author.bot) return;
 
@@ -34,8 +35,7 @@ async function execute(message) {
   if (!content) return;
 
   await message.channel.sendTyping();
-  // Discord's typing indicator expires after ~10s, but the agent call can
-  // run longer, so keep refreshing it until the response is ready.
+  // Typing indicator expires after ~10s; keep refreshing it while the agent call runs.
   const typingInterval = setInterval(() => {
     message.channel.sendTyping().catch(() => {});
   }, 8000);
@@ -55,6 +55,7 @@ async function execute(message) {
     const reply = await askFantasyAgent(contextBlock + content, serverConfig.leagueId, message.channelId);
     const { text, charts } = extractChartBlocks(reply);
 
+    // Render each chart block to a PNG; fall back to attaching the raw JSON if rendering fails.
     const files = [];
     for (let i = 0; i < charts.length; i++) {
       const chart = charts[i];
@@ -70,6 +71,7 @@ async function execute(message) {
       }
     }
 
+    // Send the text in chunks, attaching any chart files to the last one (or alone if there's no text).
     const chunks = text ? splitMessage(text) : [];
     if (!chunks.length && files.length) {
       await message.reply({ files });

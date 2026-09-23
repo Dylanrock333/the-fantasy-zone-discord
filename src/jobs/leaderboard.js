@@ -1,3 +1,4 @@
+// Fantasy player leaderboard: data fetch/format, response cache, and the self-healing channel panel.
 const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { getServerConfig } = require("../config/servers");
 const { getLeaderboard } = require("../utils/fantasyAgentClient");
@@ -24,22 +25,16 @@ const COUNT_OPTIONS = [5, 10, 15, 20, 25];
 const MAX_SIZE = Math.max(...COUNT_OPTIONS);
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-// Remembers each guild panel's queued (not-yet-searched) position/sort
-// choice (the data isn't per-user, so one shared value per guild is
-// enough). The selects only update this; the Search button is what
-// actually fetches and renders, so picking both fields doesn't trigger two
-// loads in a row.
+// Per-guild panel picks not yet searched; selects update this, only Search renders results.
 const pendingByGuild = new Map();
 const getPending = (guildId) => pendingByGuild.get(guildId) || {};
 const setPending = (guildId, updates) => pendingByGuild.set(guildId, { ...getPending(guildId), ...updates });
 
-// Short-lived cache of fantasy-bot leaderboard responses, keyed by
-// league/position/sort. Always fetches MAX_SIZE players and slices, so
-// changing the "how many" pick never costs another round trip. Stores the
-// promise itself so a Search pressed while a prefetch is still in flight
-// just awaits that same request.
+// 5-min cache of leaderboard responses keyed by league/position/sort; always fetches MAX_SIZE and slices.
+// Stores the promise so a Search during an in-flight prefetch reuses the same request.
 const playersCache = new Map();
 
+// Returns cached players for this query, or starts a fetch (evicted on failure).
 function fetchPlayers(leagueId, position, sortBy) {
   const key = `${leagueId}:${position}:${sortBy}`;
   const cached = playersCache.get(key);
@@ -51,8 +46,7 @@ function fetchPlayers(leagueId, position, sortBy) {
   return promise;
 }
 
-// Warms the cache for the panel's current picks as soon as a select
-// changes, so the fetch is usually done by the time Search is pressed.
+// Warms the cache when a select changes so Search is usually instant.
 function prefetchLeaderboard(guildId, { position, sortBy } = {}) {
   if (!position) return;
   // Best-effort: any real error surfaces when Search is pressed.
@@ -73,11 +67,7 @@ async function getLeaderboardData(guildId, position, sortBy = DEFAULT_SORT, size
   return { text, count: players.length };
 }
 
-// Used by the Search button: fetches the leaderboard and edits the panel
-// message itself in place (rather than replying), so each new search
-// replaces the last result instead of stacking new messages. The panel is
-// first flipped into a loading state (status line + disabled "Loading…"
-// button, which also blocks double-clicks), then restored with the result.
+// Search button handler: shows a loading state, then edits the panel in place with the result.
 async function replyLeaderboard(interaction, position, sortBy, size) {
   const pending = getPending(interaction.guildId);
   await interaction.update({
@@ -94,10 +84,7 @@ async function replyLeaderboard(interaction, position, sortBy, size) {
   await interaction.editReply({ content, components: buildPanelComponents(pending) });
 }
 
-// Builds the position/sort select rows plus the Search button. Whichever
-// option matches `pending` is marked default, so the dropdown itself shows
-// the current pick (instead of resetting to its placeholder) once closed.
-// `loading` disables the Search button and relabels it while a search runs.
+// Builds the panel's position/sort/count selects (current picks shown as default) and Search button.
 function buildPanelComponents(pending = {}, { loading = false } = {}) {
   const positionRow = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
@@ -145,8 +132,7 @@ function buildPanelComponents(pending = {}, { loading = false } = {}) {
   return [positionRow, sortRow, countRow, searchRow];
 }
 
-// Posts the interactive position/ranked-by/search menu into the guild's
-// configured leaderboard channel.
+// Posts a fresh panel into the guild's leaderboard channel.
 async function postLeaderboardPanel(client, guildId) {
   const config = getServerConfig(guildId, "leaderboardChannelId");
   const channel = await client.channels.fetch(config.leaderboardChannelId);
@@ -156,8 +142,7 @@ async function postLeaderboardPanel(client, guildId) {
   });
 }
 
-// Reads a select component's current option values off an already-posted
-// panel message, so they can be compared against what the code expects now.
+// Sorted option values of a select on an already-posted panel message.
 function selectOptionValues(panelMessage, customId) {
   const select = panelMessage.components.flatMap((row) => row.components).find((c) => c.customId === customId);
   return select?.options.map((o) => o.value).sort() ?? [];
@@ -167,15 +152,11 @@ function sameValues(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-// True if `customId` appears anywhere on the message's components.
 function hasComponent(panelMessage, customId) {
   return panelMessage.components.some((row) => row.components.some((c) => c.customId === customId));
 }
 
-// Makes sure the guild's leaderboard channel has an up-to-date menu panel:
-// posts one if none exists yet, or refreshes an existing panel's
-// components in place if POSITION_LABELS/SORT_LABELS have grown, or the
-// Search button is missing, since it was posted.
+// Self-healing panel: posts one if missing, or rebuilds an existing panel whose components are out of date.
 async function ensureLeaderboardPanel(client, guildId) {
   const config = getServerConfig(guildId, "leaderboardChannelId");
   const channel = await client.channels.fetch(config.leaderboardChannelId);
@@ -187,6 +168,7 @@ async function ensureLeaderboardPanel(client, guildId) {
     return;
   }
 
+  // Out of date if any component is missing or any select's options differ from the current config.
   const isCurrent =
     hasComponent(panelMessage, "leaderboard-search-button") &&
     hasComponent(panelMessage, "leaderboard-count-select") &&
@@ -199,7 +181,7 @@ async function ensureLeaderboardPanel(client, guildId) {
   }
 }
 
-// Runs the panel check/post for every configured guild; used on bot startup.
+// Runs the panel check for every configured guild (on startup).
 async function ensureLeaderboardPanelForAllGuilds(client) {
   await runForAllGuilds(client, ensureLeaderboardPanel, "Leaderboard panel setup");
 }

@@ -1,8 +1,7 @@
+// HTTP client for the fantasy-bot API (chat, charts, weekly recap, matchup preview, leaderboard).
 const { FANTASY_AGENT_URL = "http://localhost:8787" } = process.env;
 
-// FastAPI validation errors put `detail` as a list of {loc, msg} objects
-// rather than a string - flatten that into something readable instead of
-// letting it stringify as "[object Object]".
+// Flattens FastAPI error `detail` (string or list of {loc, msg}) into readable text.
 function formatErrorDetail(detail) {
   if (!detail) return "";
   if (typeof detail === "string") return detail;
@@ -10,22 +9,19 @@ function formatErrorDetail(detail) {
   return items.map((d) => (typeof d === "string" ? d : d.loc ? `${d.loc.at(-1)}: ${d.msg}` : d.msg || JSON.stringify(d))).join("; ");
 }
 
-// Shared by every fantasy-bot call below: throws a labeled error with
-// whatever detail the response body provides once the status isn't ok.
+// Throws a labeled error (with the response's detail, if any) for non-OK responses.
 async function throwIfError(res, label) {
   if (res.ok) return;
   let detail = "";
   try {
     detail = formatErrorDetail((await res.json()).detail);
   } catch {
-    // response body wasn't JSON - fall through with no detail
+    // non-JSON body: no detail
   }
   throw new Error(`${label} request failed: ${res.status}${detail ? ` - ${detail}` : ""}`);
 }
 
-// sessionId scopes fantasy-bot's server-side conversation memory - the
-// Discord channel ID works well since context is already reconstructed
-// per-channel from recent messages (see messageCreate.js).
+// Sends a chat message to the agent; sessionId (the channel ID) scopes server-side memory.
 async function askFantasyAgent(message, leagueId, sessionId) {
   const res = await fetch(`${FANTASY_AGENT_URL}/api/chat`, {
     method: "POST",
@@ -39,8 +35,7 @@ async function askFantasyAgent(message, leagueId, sessionId) {
   return reply;
 }
 
-// Sends one parsed ```chart JSON object to fantasy-bot's renderer and gets
-// a PNG back, ready to attach to a Discord message.
+// Renders one chart object to a PNG buffer via fantasy-bot.
 async function renderChartImage(chartData) {
   const res = await fetch(`${FANTASY_AGENT_URL}/api/chart`, {
     method: "POST",
@@ -55,9 +50,7 @@ async function renderChartImage(chartData) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Runs the weekly recap graph for a league and returns one league-wide
-// summary plus a power ranking of every team. week=0 means "current week"
-// server-side.
+// Fetches the weekly recap (summary + power rankings); week=0 means current week.
 async function getWeeklyRecap(leagueId, week = 0) {
   const res = await fetch(`${FANTASY_AGENT_URL}/api/weekly-recap`, {
     method: "POST",
@@ -70,11 +63,7 @@ async function getWeeklyRecap(leagueId, week = 0) {
   return res.json(); // { week, league_summary, power_rankings: [{rank, team, tag}], power_ranking_image_base64 }
 }
 
-// Runs the matchup preview graph for a league and returns a look-ahead
-// league summary plus this week's projected matchups. week=0 means
-// "current week" server-side. previousRecapContext (optional) is raw text
-// (e.g. last week's recap summary message pulled from Discord) folded into
-// the prompt as prior context so the preview can reference it.
+// Fetches the matchup preview; week=0 means current week, optional recap text is passed as prior context.
 async function getMatchupPreview(leagueId, week = 0, previousRecapContext = null) {
   const body = { league_id: leagueId, week };
   if (previousRecapContext) {
@@ -92,10 +81,7 @@ async function getMatchupPreview(leagueId, week = 0, previousRecapContext = null
   return res.json(); // { week, league_preview, matchups: [{team_a, proj_a, record_a, team_b, proj_b, record_b, winner, margin}], matchup_image_base64 }
 }
 
-// Fetches the top `size` fantasy players at `position`, ranked by
-// `sortBy` (one of "points", "avg_points", "projected_points",
-// "percent_owned"), across the whole player pool (rostered and free
-// agents alike).
+// Fetches the top `size` players at `position` (rostered and free agents), ranked by `sortBy`.
 async function getLeaderboard(leagueId, position, size = 15, sortBy = "points") {
   const res = await fetch(`${FANTASY_AGENT_URL}/api/leaderboard`, {
     method: "POST",

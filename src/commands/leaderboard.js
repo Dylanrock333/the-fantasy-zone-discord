@@ -1,9 +1,8 @@
+// /leaderboard: posts a position leaderboard into the current channel (admin-only).
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const { getLeaderboardData, SORT_LABELS, DEFAULT_SORT, DEFAULT_SIZE } = require("../jobs/leaderboard");
 const { splitMessage } = require("../utils/splitMessage");
 
-// Manual trigger for posting a position leaderboard into the channel the
-// command was run in. Admin-only to avoid spam.
 const command = {
   data: new SlashCommandBuilder()
     .setName("leaderboard")
@@ -39,6 +38,7 @@ const command = {
     const sortBy = interaction.options.getString("sort") ?? DEFAULT_SORT;
     try {
       const { text } = await getLeaderboardData(interaction.guildId, position, sortBy, count);
+      // Long leaderboards are split: first chunk fills the deferred reply, the rest go as follow-ups.
       const [first, ...rest] = splitMessage(text);
       await interaction.editReply(first);
       for (const chunk of rest) {

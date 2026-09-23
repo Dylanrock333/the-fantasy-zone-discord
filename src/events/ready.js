@@ -1,3 +1,4 @@
+// On login: log the bot's tag and make sure every guild has a current leaderboard panel.
 const { Events } = require("discord.js");
 const { ensureLeaderboardPanelForAllGuilds } = require("../jobs/leaderboard");
 const { logger } = require("../utils/logger");
