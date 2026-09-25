@@ -14,48 +14,73 @@ commands, scheduled jobs, chart/poster images).
 | `/matchup-preview` | Manage Guild | Runs the matchup preview on demand (same job as the Thursday cron) |
 | `/clear` | Manage Messages | Bulk-deletes the last 100 messages in the channel |
 | `/ping` | anyone | Liveness check |
-| `/demo` | anyone | Sample buttons/select/modal, for reference when building new components |
+| `/uptime` | anyone | Shows how long the bot process has been up |
+| `/help` | anyone | Lists the registered slash commands |
 
-Outside slash commands: any message in a guild's configured fantasy channel,
-or any message that @mentions the bot, is forwarded as a chat question to
-the fantasy-bot API and the reply (plus any chart images) is posted back.
+Outside slash commands:
+- **Chat bridge** - any message in a guild's configured fantasy channel, or any
+  message that @mentions the bot, is forwarded as a chat question to the
+  fantasy-bot API and the reply (plus any chart images) is posted back.
+- **Leaderboard panel** - a standing message in the leaderboard channel with
+  position / ranking / count selects and a Search button (re-posted or repaired on startup).
+- **Trade compare panel** - a standing embed where members pick two teams and
+  players, then get an AI take on the trade (re-posted if deleted).
+- **Scheduled posts** - weekly recap (Tue 00:00) and matchup preview (Thu 17:00 CT).
 
 ## Architecture
 
+Triggers (events, commands, interactions, cron) stay thin and call feature
+logic in `features/` (or `jobs/` for scheduled reports).
+
 ```
-index.js                    Entry point: logs in, loads commands/events/handlers, starts cron jobs
-events/
-  ready.js                    On login: ensures each guild has a leaderboard panel
-  interactionCreate.js        Routes slash commands / buttons / modals / selects to their handler
-  messageCreate.js            Chat bridge: fantasy-channel or @mention messages -> fantasy-bot API -> reply
-commands/                   One file per slash command (table above), loaded automatically
+index.js                      Entry point: logs in, loads commands/events/handlers, starts cron jobs
+events/                       Discord event triggers
+  ready.js                      On login: syncs the leaderboard and trade-compare panels
+  interactionCreate.js          Routes slash commands / buttons / modals / selects by name or customId
+  messageCreate.js              Chat bridge trigger: filters, then calls features/chat
+  messageDelete.js              Re-posts the trade-compare panel if it's deleted
+commands/                     One file per slash command (table above), loaded automatically
+interactions/                 Component handlers keyed by customId (a file exports `handler` or `handlers`)
+  buttons/leaderboard/, buttons/tradeCompare/   Grouped by feature
+  selects/leaderboard.js, selects/tradeCompare.js
+  modals/tradeComparePromptModal.js
+features/                     Feature logic
+  chat/handleMessage.js         Context, agent call, chart rendering, chunked reply
+  leaderboard/                  data.js (fetch + cache + text), panel.js (build/sync/results), state.js (pending picks), selectHandler.js
+  tradeCompare/                 panel.js (render), panelSetup.js (post/recover), state.js (sessions, withSession),
+                                pick.js (team/player picks), compare.js (run the comparison)
 jobs/
-  scheduler.js                node-cron schedules: weekly recap (Tue 00:00), matchup preview (Thu 17:00 CT)
-  weeklyRecap.js, matchupPreview.js, leaderboard.js   Job logic + "for all guilds" variants used by both cron and manual commands
+  weeklyRecap.js, matchupPreview.js   Report logic, used by both cron and the manual commands
 utils/
-  fantasyAgentClient.js       HTTP client for the fantasy-bot API (chat, chart, recap, preview)
-  chartRenderer.js            Extracts ```chart``` JSON blocks from agent replies, renders to PNG
-  loaders.js                   Auto-loads commands/events/button/modal/select handlers from disk
-  splitMessage.js, logger.js, imageUtils.js, guildJobs.js
-config/servers.js           Per-guild config: channel IDs + fantasy-bot league id (see TODO: move to DB)
+  scheduler.js                  node-cron schedules for the two report jobs
+  fantasyBotClient.js           HTTP client for the fantasy-bot API (one shared request helper)
+  chartBlocks.js                Extracts ```chart``` JSON blocks from agent replies
+  loaders.js                    Auto-loads commands/events/button/modal/select handlers (recurses into subfolders)
+  chunkedSend.js                Splits text to Discord's 2000-char limit (splitMessage, sendChunked, replyChunked)
+  forEachGuild.js, typingIndicator.js, imageUtils.js, logger.js
+config/                       default.js (shared settings), prod.js / test.js (guilds + overrides, picked by APP_ENV),
+                                index.js (loads env + merged settings, validates, exports env / settings / GUILDS / getGuildConfig)
 ```
 
-Flow for a chat message: `messageCreate` -> `fantasyAgentClient.askFantasyAgent`
-(calls the fantasy-bot API) -> `chartRenderer` pulls out any chart blocks ->
-`splitMessage` chunks long replies -> reply sent to Discord.
+Flow for a chat message: `messageCreate` -> `features/chat/handleMessage` ->
+`fantasyBotClient.sendChat` (calls the fantasy-bot API) -> `chartBlocks` pulls
+out any chart blocks -> `chunkedSend.splitMessage` chunks long replies -> reply
+sent to Discord.
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env   # fill in DISCORD_TOKEN, DISCORD_CLIENT_ID, FANTASY_AGENT_URL
+cp .env.example .env   # fill in APP_ENV (prod|test), DISCORD_TOKEN, DISCORD_CLIENT_ID, FANTASY_AGENT_URL
 npm run deploy-commands # registers slash commands with Discord
 npm run dev             # or `npm start` for production
 ```
 
 Requires a running [fantasy-bot](https://github.com/Dylanrock333/fantasy-bot)
 instance reachable at `FANTASY_AGENT_URL`. Add each guild you run in to
-`src/config/servers.js` (channel IDs + `leagueId`) before it'll respond.
+`src/config/prod.js` or `test.js` (channel IDs + `leagueId`) before it'll respond.
+Currently `test.js` lists both guilds and `prod.js` only the main one.
+Tunables (cron schedules, cache TTL, limits) live in `src/config/default.js`; an env file only needs the values it overrides.
 
 ## Roadmap / infra TODOs
 
@@ -71,7 +96,7 @@ tracker.
 2. **Prod vs. test deployments** - split into a prod deployment (real
    league list) and a test deployment (small set of leagues Dylan controls)
    so new features land in test first. Needs the bot to run as two
-   processes with separate tokens/env/`src/config/servers.js` lists, each
+   processes with separate tokens/env and their own `src/config/prod.js` / `test.js` guild lists, each
    pointed at its own fantasy-bot API instance.
 3. **Zero-downtime prod updates** - deploy changes to prod without a hard
    restart that drops in-flight interactions or the `node-cron` scheduler's
