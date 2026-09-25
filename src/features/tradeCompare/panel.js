@@ -12,15 +12,14 @@ const {
   StringSelectMenuOptionBuilder,
 } = require("discord.js");
 
-// Footer marker on every panel embed - how bootstrap.js recognizes an
-// already-posted panel message across bot restarts, without a DB.
-const PANEL_MARKER = "trade-compare-panel";
+const { settings } = require("../../config");
 
-const DEFAULT_PROMPT =
-  "what do you think of this trade, take into consideration the team and pull in player stats";
+// panelMarker is the footer on every panel embed - how panelSetup.js recognizes an
+// already-posted panel message across bot restarts, without a DB.
+const { panelMarker: PANEL_MARKER, defaultTradePrompt: DEFAULT_PROMPT, selectOptionCap } = settings.panels;
 
 function buildTeamSelectRow(customId, teams, selectedId, placeholder) {
-  const options = teams.slice(0, 25).map((t) =>
+  const options = teams.slice(0, selectOptionCap).map((t) =>
     new StringSelectMenuOptionBuilder()
       .setLabel(t.name.slice(0, 100))
       .setValue(String(t.id))
@@ -34,7 +33,7 @@ function buildTeamSelectRow(customId, teams, selectedId, placeholder) {
 }
 
 function buildPlayerSelectRow(customId, roster, selectedIds, placeholder) {
-  const capped = roster.slice(0, 25);
+  const capped = roster.slice(0, selectOptionCap);
   const options = capped.map((p) =>
     new StringSelectMenuOptionBuilder()
       .setLabel(`${p.name} (${p.position})`.slice(0, 100))
@@ -58,18 +57,14 @@ function buildActionRow() {
   );
 }
 
-function describeSelection(roster, selectedIds) {
-  const names = selectedIds
-    .map((id) => roster.find((p) => p.id === id)?.name)
-    .filter(Boolean);
-  return names.length ? names.join(", ") : "*(none selected)*";
+// Names of the selected players on a roster, in selection order.
+function selectedNames(roster, selectedIds) {
+  return selectedIds.map((id) => roster.find((p) => p.id === id)?.name).filter(Boolean);
 }
 
-function playerNames(roster, selectedIds) {
-  return selectedIds
-    .map((id) => roster.find((p) => p.id === id)?.name)
-    .filter(Boolean)
-    .join(", ");
+function describeSelection(roster, selectedIds) {
+  const names = selectedNames(roster, selectedIds);
+  return names.length ? names.join(", ") : "*(none selected)*";
 }
 
 // The exact text sent to fantasy-bot's /api/chat. States the trade from
@@ -77,8 +72,8 @@ function playerNames(roster, selectedIds) {
 // come from tool results, not inference, so spelling out both sides
 // minimizes the chance the model has to infer who's giving up what.
 function buildTradeMessage(session) {
-  const aGives = playerNames(session.rosterA, session.selectedA);
-  const bGives = playerNames(session.rosterB, session.selectedB);
+  const aGives = selectedNames(session.rosterA, session.selectedA).join(", ");
+  const bGives = selectedNames(session.rosterB, session.selectedB).join(", ");
   return (
     `Hypothetical trade: ${session.teamA.name} would trade away ${aGives} and receive ${bGives} ` +
     `from ${session.teamB.name} (who would trade away ${bGives} and receive ${aGives}).\n\n` +

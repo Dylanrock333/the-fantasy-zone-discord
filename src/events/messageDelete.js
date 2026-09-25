@@ -1,6 +1,6 @@
 const { Events } = require("discord.js");
 const { findGuildByPanelMessageId, deleteSession } = require("../features/tradeCompare/state");
-const { ensurePanel } = require("../features/tradeCompare/bootstrap");
+const { ensureTradePanel } = require("../features/tradeCompare/panelSetup");
 const { logger } = require("../utils/logger");
 
 const name = Events.MessageDelete;
@@ -15,7 +15,7 @@ async function execute(message) {
   deleteSession(message.id);
   logger.info(`Trade compare panel deleted in guild ${guildId}, reposting...`);
   try {
-    await ensurePanel(message.client, guildId);
+    await ensureTradePanel(message.client, guildId);
   } catch (err) {
     logger.error(`Trade compare: failed to repost panel for guild ${guildId}:`, err);
   }

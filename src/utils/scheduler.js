@@ -1,19 +1,15 @@
 // Cron schedules for the weekly recap and matchup preview jobs.
 const cron = require("node-cron");
-const { logger } = require("../utils/logger");
-const { postWeeklyRecapForAllGuilds } = require("./weeklyRecap");
-const { postMatchupPreviewForAllGuilds } = require("./matchupPreview");
+const { logger } = require("./logger");
+const { settings } = require("../config");
+const { postWeeklyRecapForAllGuilds } = require("../jobs/weeklyRecap");
+const { postMatchupPreviewForAllGuilds } = require("../jobs/matchupPreview");
 
-// Tuesday 00:00, after Monday Night Football.
-const WEEKLY_RECAP_CRON = "0 0 * * 2";
-
-// Thursday 17:00 Central, before Thursday Night Football.
-const MATCHUP_PREVIEW_CRON = "0 17 * * 4";
-const MATCHUP_PREVIEW_TZ = "America/Chicago";
+const { weeklyRecapCron, matchupPreviewCron, matchupPreviewTz } = settings.schedules;
 
 // Registers both cron jobs; failures are logged, never thrown.
 function startScheduledJobs(client) {
-  cron.schedule(WEEKLY_RECAP_CRON, () => {
+  cron.schedule(weeklyRecapCron, () => {
     logger.info("Running scheduled weekly recap...");
     postWeeklyRecapForAllGuilds(client).catch((err) =>
       logger.error("Scheduled weekly recap failed:", err)
@@ -21,14 +17,14 @@ function startScheduledJobs(client) {
   });
 
   cron.schedule(
-    MATCHUP_PREVIEW_CRON,
+    matchupPreviewCron,
     () => {
       logger.info("Running scheduled matchup preview...");
       postMatchupPreviewForAllGuilds(client).catch((err) =>
         logger.error("Scheduled matchup preview failed:", err)
       );
     },
-    { timezone: MATCHUP_PREVIEW_TZ }
+    { timezone: matchupPreviewTz }
   );
 }
 

@@ -1,13 +1,13 @@
 // Tuesday weekly recap: power-rankings image plus league summary, posted to each guild's weekly-reports channel.
-const { getServerConfig } = require("../config/servers");
-const { getWeeklyRecap } = require("../utils/fantasyAgentClient");
-const { sendChunked } = require("../utils/splitMessage");
+const { getGuildConfig } = require("../config");
+const { getWeeklyRecap } = require("../utils/fantasyBotClient");
+const { sendChunked } = require("../utils/chunkedSend");
 const { base64ToAttachment } = require("../utils/imageUtils");
-const { runForAllGuilds } = require("../utils/guildJobs");
+const { forEachGuild } = require("../utils/forEachGuild");
 
 // Posts the power-rankings image (if fantasy-bot produced one) and the summary to the guild's weekly-reports channel.
 async function postWeeklyRecap(client, guildId) {
-  const config = getServerConfig(guildId, "weeklyReportsChannelId");
+  const config = getGuildConfig(guildId, "weeklyReportsChannelId");
   const channel = await client.channels.fetch(config.weeklyReportsChannelId);
   const { week, league_summary, power_rankings, power_ranking_image_base64 } =
     await getWeeklyRecap(config.leagueId);
@@ -24,7 +24,7 @@ async function postWeeklyRecap(client, guildId) {
 
 // Runs the recap for every configured guild (cron).
 async function postWeeklyRecapForAllGuilds(client) {
-  await runForAllGuilds(client, postWeeklyRecap, "Weekly recap");
+  await forEachGuild(client, postWeeklyRecap, "Weekly recap");
 }
 
 module.exports = { postWeeklyRecap, postWeeklyRecapForAllGuilds };

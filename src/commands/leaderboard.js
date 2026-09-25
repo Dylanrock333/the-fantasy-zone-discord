@@ -1,7 +1,8 @@
 // /leaderboard: posts a position leaderboard into the current channel (admin-only).
 const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
-const { getLeaderboardData, SORT_LABELS, DEFAULT_SORT, DEFAULT_SIZE } = require("../jobs/leaderboard");
-const { splitMessage } = require("../utils/splitMessage");
+const { settings } = require("../config");
+const { getLeaderboardText, SORT_LABELS, DEFAULT_SORT, DEFAULT_SIZE } = require("../features/leaderboard/data");
+const { replyChunked } = require("../utils/chunkedSend");
 
 const command = {
   data: new SlashCommandBuilder()
@@ -22,7 +23,7 @@ const command = {
         )
     )
     .addIntegerOption((option) =>
-      option.setName("count").setDescription("How many players to list (default 15)").setMinValue(5).setMaxValue(25)
+      option.setName("count").setDescription("How many players to list (default 15)").setMinValue(settings.leaderboard.minSize).setMaxValue(settings.leaderboard.maxSize)
     )
     .addStringOption((option) =>
       option
@@ -37,13 +38,8 @@ const command = {
     const count = interaction.options.getInteger("count") ?? DEFAULT_SIZE;
     const sortBy = interaction.options.getString("sort") ?? DEFAULT_SORT;
     try {
-      const { text } = await getLeaderboardData(interaction.guildId, position, sortBy, count);
-      // Long leaderboards are split: first chunk fills the deferred reply, the rest go as follow-ups.
-      const [first, ...rest] = splitMessage(text);
-      await interaction.editReply(first);
-      for (const chunk of rest) {
-        await interaction.followUp(chunk);
-      }
+      const { text } = await getLeaderboardText(interaction.guildId, position, sortBy, count);
+      await replyChunked(interaction, text);
     } catch (err) {
       await interaction.editReply(`Leaderboard failed: ${err.message}`);
     }

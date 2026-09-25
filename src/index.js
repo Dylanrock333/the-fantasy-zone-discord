@@ -9,13 +9,10 @@ const {
   loadModalHandlers,
   loadSelectHandlers,
 } = require("./utils/loaders");
-const { startScheduledJobs } = require("./jobs/scheduler");
+const { startScheduledJobs } = require("./utils/scheduler");
+const { env, requireEnv } = require("./config");
 
-const { DISCORD_TOKEN } = process.env;
-
-if (!DISCORD_TOKEN) {
-  throw new Error("DISCORD_TOKEN must be set in the environment");
-}
+requireEnv("DISCORD_TOKEN");
 
 const client = new Client({
   intents: [
@@ -38,7 +35,7 @@ async function main() {
   await loadCommands(client);
   await loadEvents(client);
 
-  await client.login(DISCORD_TOKEN);
+  await client.login(env.DISCORD_TOKEN);
   startScheduledJobs(client);
 }
 
