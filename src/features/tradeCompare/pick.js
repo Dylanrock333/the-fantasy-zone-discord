@@ -13,6 +13,8 @@ async function pickTeam(interaction, session, side) {
     return;
   }
 
+  // Ack within Discord's 3s window before the roster fetch, which can be slower.
+  await interaction.deferUpdate();
   try {
     const { id, name, players } = await getTeamPlayers(session.leagueId, teamId);
     updateSession(interaction.message.id, {
@@ -20,10 +22,10 @@ async function pickTeam(interaction, session, side) {
       [`roster${side}`]: players,
       [`selected${side}`]: [],
     });
-    await interaction.update(renderPanel(session));
+    await interaction.editReply(renderPanel(session));
   } catch (err) {
     logger.error(`trade compare: failed to load team ${side} roster:`, err);
-    await interaction.update(renderPanel(session, { error: "Could not load that team's roster - try again." }));
+    await interaction.editReply(renderPanel(session, { error: "Could not load that team's roster - try again." }));
   }
 }
 
