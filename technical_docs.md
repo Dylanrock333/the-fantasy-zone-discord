@@ -5,14 +5,14 @@ Node 20 / discord.js 14 / node-cron 4 / dotenv. CommonJS. No DB, no tests. Env: 
 ## 1. Features & responsibilities
 
 Bot is responsible for (Discord side):
-- Chat bridge: forwards fantasy-channel messages / @mentions to the API, renders reply + chart PNGs.
+- Chat bridge: forwards fantasy-channel messages / @mentions to the API, replies with the result.
 - Scheduled posts: Tuesday weekly recap, Thursday matchup preview (image + text) per guild.
 - Player leaderboard: self-healing channel panel (selects + Search button) and `/leaderboard`.
 - Trade-compare: standing embed panel (team/player selects) that asks the API for an AI trade take.
 - Admin slash commands (`/weeklyrecap`, `/matchup-preview`, `/clear`), `/ping`, `/uptime`, `/help`.
 - Message chunking (2000 char), typing indicator, per-guild config, in-memory UI state (pending picks, sessions, 5-min leaderboard cache).
 
-Delegated to fantasy-bot API: all ESPN/league data, LLM chat + memory (keyed by channel ID), chart rendering, recap/preview/power-ranking generation and images (base64), leaderboard ranking, league teams/rosters, current-week calculation (week=0).
+Delegated to fantasy-bot API: all ESPN/league data, LLM chat + memory (keyed by channel ID), recap/preview/power-ranking generation and images (base64), leaderboard ranking, league teams/rosters, current-week calculation (week=0).
 
 ## 2. Repo tree map
 
@@ -45,7 +45,7 @@ Rule: triggers (events, commands, interactions, cron) stay thin and call logic i
     │   ├── selects/               leaderboard.js (position/sort/count), tradeCompare.js (team + players, A and B)
     │   └── modals/                tradeComparePromptModal
     ├── features/              feature logic
-    │   ├── chat/handleMessage.js      context fetch, agent call, chart rendering, chunked reply
+    │   ├── chat/handleMessage.js      context fetch, agent call, chunked reply
     │   ├── leaderboard/
     │   │   ├── data.js                labels, 5-min response cache, prefetch, getLeaderboardText
     │   │   ├── panel.js               buildPanelComponents, sendLeaderboardPanel, syncLeaderboardPanel(+ForAllGuilds), showLeaderboardResults
@@ -59,12 +59,11 @@ Rule: triggers (events, commands, interactions, cron) stay thin and call logic i
     │       └── compare.js             runCompare: lock panel, ask agent, render result + follow-ups
     ├── jobs/                  scheduled report logic (used by cron and the manual commands)
     │   ├── weeklyRecap.js         postWeeklyRecap + ForAllGuilds
-    │   └── matchupPreview.js      postMatchupPreview + ForAllGuilds; feeds last recap text as context
+    │   ├── matchupPreview.js      postMatchupPreview + ForAllGuilds; feeds last recap text as context
+    │   └── scheduler.js           two node-cron schedules
     └── utils/
-        ├── scheduler.js           two node-cron schedules
         ├── fantasyBotClient.js    one request() helper + a wrapper per API endpoint (sendChat, getLeaderboard, ...)
         ├── loaders.js             recursive readdir loaders for commands/events/buttons/modals/selects
-        ├── chartBlocks.js         extracts ```chart JSON blocks (type "table" only)
         ├── chunkedSend.js         splitMessage, sendChunked, replyChunked
         ├── forEachGuild.js        forEachGuild(client, fn, label)
         ├── imageUtils.js          base64 -> AttachmentBuilder
@@ -119,11 +118,10 @@ Message flow (`events/messageCreate.js` -> `features/chat/handleMessage.js`):
 1. Ignore bots; guild config lookup; proceed only if in `chatChannelId` or bot is @mentioned; strip mention; skip empty.
 2. `withTyping` -> fetch last 10 channel msgs before this one, keep bot's last 5 as text "Context" block (no local history).
 3. `sendChat(context + content, leagueId, channelId)` -> `POST /api/chat` (session_id = channel ID).
-4. `extractChartBlocks(reply)` -> text + chart objects; each chart -> `renderChartImage` (`POST /api/chart`, PNG); on failure attach raw JSON file.
-5. `splitMessage(text)` (2000 cap, cut at newline); `message.reply` each chunk, files on last chunk (or alone).
-6. Any error -> "Something went wrong talking to the fantasy agent."
+4. `splitMessage(reply)` (2000 cap, cut at newline); `message.reply` each chunk.
+5. Any error -> "Something went wrong talking to the fantasy agent."
 
-Scheduled jobs (`utils/scheduler.js`, node-cron; run for every guild in GUILDS, per-guild failure isolated by `forEachGuild`):
+Scheduled jobs (`jobs/scheduler.js`, node-cron; run for every guild in GUILDS, per-guild failure isolated by `forEachGuild`):
 
 | Job | Schedule | Channel | Posts |
 |---|---|---|---|
@@ -136,7 +134,7 @@ Other event handlers:
 - `MessageDelete`: if deleted message is a tracked trade-compare panel, drop session and repost.
 - Trade-compare state is in-memory; restart resets panel to fresh session.
 
-API endpoints used: `POST /api/chat`, `/api/chart`, `/api/weekly-recap`, `/api/matchup-preview`, `/api/leaderboard`; `GET /api/league/{id}/teams`, `/api/league/{id}/teams/{tid}/players`.
+API endpoints used: `POST /api/chat`, `/api/weekly-recap`, `/api/matchup-preview`, `/api/leaderboard`; `GET /api/league/{id}/teams`, `/api/league/{id}/teams/{tid}/players`.
 
 ## Audit notes (open items)
 
@@ -162,4 +160,4 @@ API endpoints used: `POST /api/chat`, `/api/chart`, `/api/weekly-recap`, `/api/m
 - `fantasyBotClient.js` deduplicated onto one `request()` helper (all errors now include API detail).
 - `messageCreate.js` returns quietly for DMs and unconfigured guilds (was an unhandled throw).
 - `panel.js` `playerNames` merged into `selectedNames`.
-- Renames: `askFantasyAgent`->`sendChat`, `SERVERS`->`GUILDS`, `bootstrap.js`->`panelSetup.js`, `runForAllGuilds`->`forEachGuild`, `splitMessage.js`->`chunkedSend.js`, `chartRenderer.js`->`chartBlocks.js`.
+- Renames: `askFantasyAgent`->`sendChat`, `SERVERS`->`GUILDS`, `bootstrap.js`->`panelSetup.js`, `runForAllGuilds`->`forEachGuild`, `splitMessage.js`->`chunkedSend.js`.

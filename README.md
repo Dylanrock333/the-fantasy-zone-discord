@@ -1,9 +1,9 @@
 # The Fantasy Zone Discord Bot
 
 Discord bot client for [fantasy-bot](https://github.com/Dylanrock333/fantasy-bot):
-it calls that API's endpoints (`/api/chat`, `/api/chart`, `/api/weekly-recap`,
+it calls that API's endpoints (`/api/chat`, `/api/weekly-recap`,
 `/api/matchup-preview`) and renders the JSON back into Discord (slash
-commands, scheduled jobs, chart/poster images).
+commands, scheduled jobs, poster images).
 
 ## Commands
 
@@ -20,7 +20,7 @@ commands, scheduled jobs, chart/poster images).
 Outside slash commands:
 - **Chat bridge** - any message in a guild's configured fantasy channel, or any
   message that @mentions the bot, is forwarded as a chat question to the
-  fantasy-bot API and the reply (plus any chart images) is posted back.
+  fantasy-bot API and the reply is posted back.
 - **Leaderboard panel** - a standing message in the leaderboard channel with
   position / ranking / count selects and a Search button (re-posted or repaired on startup).
 - **Trade compare panel** - a standing embed where members pick two teams and
@@ -45,16 +45,15 @@ interactions/                 Component handlers keyed by customId (a file expor
   selects/leaderboard.js, selects/tradeCompare.js
   modals/tradeComparePromptModal.js
 features/                     Feature logic
-  chat/handleMessage.js         Context, agent call, chart rendering, chunked reply
+  chat/handleMessage.js         Context, agent call, chunked reply
   leaderboard/                  data.js (fetch + cache + text), panel.js (build/sync/results), state.js (pending picks), selectHandler.js
   tradeCompare/                 panel.js (render), panelSetup.js (post/recover), state.js (sessions, withSession),
                                 pick.js (team/player picks), compare.js (run the comparison)
 jobs/
   weeklyRecap.js, matchupPreview.js   Report logic, used by both cron and the manual commands
-utils/
   scheduler.js                  node-cron schedules for the two report jobs
+utils/
   fantasyBotClient.js           HTTP client for the fantasy-bot API (one shared request helper)
-  chartBlocks.js                Extracts ```chart``` JSON blocks from agent replies
   loaders.js                    Auto-loads commands/events/button/modal/select handlers (recurses into subfolders)
   chunkedSend.js                Splits text to Discord's 2000-char limit (splitMessage, sendChunked, replyChunked)
   forEachGuild.js, typingIndicator.js, imageUtils.js, logger.js
@@ -63,9 +62,8 @@ config/                       default.js (shared settings), prod.js / test.js (g
 ```
 
 Flow for a chat message: `messageCreate` -> `features/chat/handleMessage` ->
-`fantasyBotClient.sendChat` (calls the fantasy-bot API) -> `chartBlocks` pulls
-out any chart blocks -> `chunkedSend.splitMessage` chunks long replies -> reply
-sent to Discord.
+`fantasyBotClient.sendChat` (calls the fantasy-bot API) ->
+`chunkedSend.splitMessage` chunks long replies -> reply sent to Discord.
 
 ## Setup
 

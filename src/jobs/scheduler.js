@@ -1,9 +1,9 @@
 // Cron schedules for the weekly recap and matchup preview jobs.
 const cron = require("node-cron");
-const { logger } = require("./logger");
+const { logger } = require("../utils/logger");
 const { settings } = require("../config");
-const { postWeeklyRecapForAllGuilds } = require("../jobs/weeklyRecap");
-const { postMatchupPreviewForAllGuilds } = require("../jobs/matchupPreview");
+const { postWeeklyRecapForAllGuilds } = require("./weeklyRecap");
+const { postMatchupPreviewForAllGuilds } = require("./matchupPreview");
 
 // Cron expressions from config/default.js; only the preview has an explicit timezone.
 const { weeklyRecapCron, matchupPreviewCron, matchupPreviewTz } = settings.schedules;

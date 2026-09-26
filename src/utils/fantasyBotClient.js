@@ -1,4 +1,4 @@
-// HTTP client for the fantasy-bot API (chat, charts, weekly recap, matchup preview, leaderboard).
+// HTTP client for the fantasy-bot API (chat, weekly recap, matchup preview, leaderboard).
 const { env } = require("../config");
 // Base URL of the fantasy-bot API (FANTASY_AGENT_URL env var, localhost by default).
 const FANTASY_AGENT_URL = env.FANTASY_AGENT_URL;
@@ -44,12 +44,6 @@ async function sendChat(message, leagueId, sessionId) {
   return reply;
 }
 
-// Renders one chart object to a PNG buffer via fantasy-bot.
-async function renderChartImage(chartData) {
-  const res = await request("/api/chart", "chart render", chartData);
-  return Buffer.from(await res.arrayBuffer());
-}
-
 // Fetches the weekly recap (summary + power rankings); week=0 means current week.
 // Returns { week, league_summary, power_rankings: [{rank, team, tag}], power_ranking_image_base64 }.
 function getWeeklyRecap(leagueId, week = 0) {
@@ -82,7 +76,6 @@ function getTeamPlayers(leagueId, teamId) {
 
 module.exports = {
   sendChat,
-  renderChartImage,
   getWeeklyRecap,
   getMatchupPreview,
   getLeaderboard,

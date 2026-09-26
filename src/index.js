@@ -9,7 +9,7 @@ const {
   loadModalHandlers,
   loadSelectHandlers,
 } = require("./utils/loaders");
-const { startScheduledJobs } = require("./utils/scheduler");
+const { startScheduledJobs } = require("./jobs/scheduler");
 const { env, requireEnv } = require("./config");
 
 requireEnv("DISCORD_TOKEN");
