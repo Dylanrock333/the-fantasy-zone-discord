@@ -1,3 +1,4 @@
+// Trade-compare Edit Prompt button: opens a modal prefilled with the panel's current prompt.
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 const { settings } = require("../../../config");
 const { withSession } = require("../../../features/tradeCompare/state");
@@ -16,7 +17,7 @@ const handler = {
 
     modal.addComponents(new ActionRowBuilder().addComponents(input));
     await interaction.showModal(modal);
-  }, { ephemeral: true }),
+  }, { ephemeral: true }), // a modal can't update the panel, so an expired panel gets a private reply
 };
 
 module.exports = { handler };

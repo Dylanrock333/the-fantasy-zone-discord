@@ -1,3 +1,4 @@
+// Trade-compare prompt modal submit: saves the edited prompt (blank = default) and redraws the panel.
 const { MessageFlags } = require("discord.js");
 const { getSession, updateSession } = require("../../features/tradeCompare/state");
 const { renderPanel, DEFAULT_PROMPT } = require("../../features/tradeCompare/panel");
@@ -6,7 +7,7 @@ const handler = {
   customId: "tradeCompare:promptModal",
   async execute(interaction) {
     // Populated because this modal is only ever opened from a component on
-    // the panel message (tradeCompareEditPrompt.js) - discord.js carries
+    // the panel message (buttons/tradeCompare/editPrompt.js) - discord.js carries
     // interaction.message through to the resulting modal submit.
     const messageId = interaction.message?.id;
     if (!messageId) {

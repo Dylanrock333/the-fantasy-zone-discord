@@ -13,6 +13,7 @@ const command = {
         .setName("position")
         .setDescription("Position to rank")
         .setRequired(true)
+        // value is the position code fantasy-bot expects (defenses are "D/ST")
         .addChoices(
           { name: "QB", value: "QB" },
           { name: "RB", value: "RB" },

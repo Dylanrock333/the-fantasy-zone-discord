@@ -4,6 +4,7 @@ const SUPPORTED_TYPES = new Set(["table"]);
 
 // Returns the reply text minus supported chart blocks, plus the parsed charts; bad blocks stay in the text.
 function extractChartBlocks(text) {
+  // Matches ```chart ... ``` fences; group 1 is the JSON body.
   const fenceRe = /```chart\s*\n([\s\S]*?)```/g;
   let lastIndex = 0;
   let cleaned = "";

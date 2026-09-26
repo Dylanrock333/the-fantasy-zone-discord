@@ -1,7 +1,7 @@
-// Discord's typing indicator expires after ~10s, so this keeps refreshing it
-// until the wrapped work finishes.
+// Keeps the "Bot is typing..." indicator showing while slow work (like an agent call) runs.
 const { settings } = require("../config");
 
+// Shows typing in channel until fn finishes, refreshing it before Discord's ~10s expiry; returns fn's result.
 async function withTyping(channel, fn) {
   await channel.sendTyping();
   const interval = setInterval(() => {

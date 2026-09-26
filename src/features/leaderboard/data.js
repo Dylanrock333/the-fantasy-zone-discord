@@ -2,6 +2,7 @@
 const { getGuildConfig, settings } = require("../../config");
 const { getLeaderboard } = require("../../utils/fantasyBotClient");
 
+// Position code fantasy-bot expects -> label shown in Discord.
 const POSITION_LABELS = { QB: "QB", RB: "RB", WR: "WR", TE: "TE", K: "K", "D/ST": "DEF" };
 // Add entries here to grow the "Ranked by" list (channel menu + /leaderboard command both read this).
 const SORT_LABELS = {
@@ -17,6 +18,7 @@ const STAT_FORMATTERS = {
   projected_points: (p) => `${p.projected_total_points.toFixed(1)} proj pts`,
   percent_owned: (p) => (p.percent_owned < 0 ? "ownership unknown" : `${p.percent_owned.toFixed(0)}% owned`),
 };
+// Leaderboard settings from config/default.js.
 const {
   defaultSort: DEFAULT_SORT,
   defaultSize: DEFAULT_SIZE,

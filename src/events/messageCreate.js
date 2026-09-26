@@ -5,8 +5,9 @@ const { GUILDS } = require("../config");
 const { handleMessage } = require("../features/chat/handleMessage");
 
 const name = Events.MessageCreate;
-const once = false;
+const once = false; // fire on every message
 
+// Ignores bots and off-topic messages, strips the bot @mention, and hands the text to the chat feature.
 async function execute(message) {
   if (message.author.bot) return;
 

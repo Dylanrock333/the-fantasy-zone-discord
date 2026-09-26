@@ -9,16 +9,17 @@ const panelMessageByGuild = new Map(); // guildId -> messageId
 
 // The user-editable part of a session; also what Cancel resets to.
 const emptyPicks = () => ({
-  teamA: null,
+  teamA: null, // { id, name }
   teamB: null,
-  rosterA: null,
+  rosterA: null, // that team's players, from fantasy-bot
   rosterB: null,
-  selectedA: [],
+  selectedA: [], // IDs of the players that side gives up
   selectedB: [],
   prompt: DEFAULT_PROMPT,
-  status: "pickingTeamA",
+  status: "pickingTeamA", // then "comparing", then "done" or "error"
 });
 
+// A fresh session for a guild's panel: fixed guild/league info plus empty picks.
 function newSession(config, teams) {
   return {
     guildId: config.guildId,
@@ -30,6 +31,7 @@ function newSession(config, teams) {
   };
 }
 
+// Stores a session under the panel's message ID.
 function createSession(messageId, init) {
   const session = { ...init };
   sessions.set(messageId, session);
@@ -40,6 +42,7 @@ function getSession(messageId) {
   return sessions.get(messageId);
 }
 
+// Merges patch into the stored session in place; returns it, or null if it's gone.
 function updateSession(messageId, patch) {
   const session = sessions.get(messageId);
   if (!session) return null;
@@ -51,10 +54,12 @@ function deleteSession(messageId) {
   sessions.delete(messageId);
 }
 
+// Records which message is the guild's panel.
 function setPanelMessageId(guildId, messageId) {
   panelMessageByGuild.set(guildId, messageId);
 }
 
+// Reverse lookup: whose panel is this message? (used when a message is deleted)
 function findGuildByPanelMessageId(messageId) {
   for (const [guildId, id] of panelMessageByGuild) {
     if (id === messageId) return guildId;

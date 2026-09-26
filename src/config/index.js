@@ -4,12 +4,14 @@ require("dotenv/config");
 const cron = require("node-cron");
 const defaults = require("./default");
 
+// Valid APP_ENV values; each has a matching ./<name>.js file.
 const ENVIRONMENTS = ["prod", "test"];
 const APP_ENV = process.env.APP_ENV;
 if (!ENVIRONMENTS.includes(APP_ENV)) {
   throw new Error(`APP_ENV must be one of ${ENVIRONMENTS.join(", ")} (got "${APP_ENV ?? ""}")`);
 }
 
+// True for {} objects, false for arrays, null and scalars.
 const isPlainObject = (v) => v && typeof v === "object" && !Array.isArray(v);
 
 // Merges nested objects; arrays and scalars in `override` replace the base value.
@@ -21,12 +23,15 @@ function deepMerge(base, override) {
   return out;
 }
 
+// Recursively freezes an object so config can't be changed at runtime.
 function deepFreeze(obj) {
   for (const value of Object.values(obj)) if (value && typeof value === "object") deepFreeze(value);
   return Object.freeze(obj);
 }
 
+// Final settings: default.js with the APP_ENV file layered on top.
 const merged = deepMerge(defaults, require(`./${APP_ENV}`));
+// Derived bounds for the /leaderboard count option.
 merged.leaderboard.maxSize = Math.max(...merged.leaderboard.countOptions);
 merged.leaderboard.minSize = Math.min(...merged.leaderboard.countOptions);
 
@@ -45,8 +50,10 @@ function validate({ schedules, guilds }) {
 validate(merged);
 deepFreeze(merged);
 
+// GUILDS: per-guild IDs keyed by guild ID. settings: everything else.
 const { guilds: GUILDS, ...settings } = merged;
 
+// Environment variables the bot reads (secrets stay in .env, not the config files).
 const env = {
   APP_ENV,
   DISCORD_TOKEN: process.env.DISCORD_TOKEN,

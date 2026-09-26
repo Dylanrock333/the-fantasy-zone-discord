@@ -54,6 +54,7 @@ function loadInteractionHandlers(subdir) {
   return collection;
 }
 
+// One loader per interaction type, each reading its own interactions/ subfolder.
 const loadButtonHandlers = () => loadInteractionHandlers("buttons");
 const loadModalHandlers = () => loadInteractionHandlers("modals");
 const loadSelectHandlers = () => loadInteractionHandlers("selects");

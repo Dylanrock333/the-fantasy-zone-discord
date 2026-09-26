@@ -1,5 +1,6 @@
 // Test environment: every guild the test deployment serves, in the new format. Anything else falls back to default.js.
 module.exports = {
+  // guild ID -> its channels and league (field meanings: see guilds in default.js)
   guilds: {
     // main
     "1544547612659679294": {

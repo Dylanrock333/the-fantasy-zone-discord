@@ -1,10 +1,11 @@
+// Watches for the standing trade-compare panel being deleted and reposts it.
 const { Events } = require("discord.js");
 const { findGuildByPanelMessageId, deleteSession } = require("../features/tradeCompare/state");
 const { ensureTradePanel } = require("../features/tradeCompare/panelSetup");
 const { logger } = require("../utils/logger");
 
 const name = Events.MessageDelete;
-const once = false;
+const once = false; // fire on every deleted message
 
 // Self-heals the standing trade-compare panel if someone deletes it - no
 // command is needed to bring it back.

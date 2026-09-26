@@ -8,6 +8,7 @@ const { GUILDS, requireEnv, env } = require("./config");
 
 requireEnv("DISCORD_TOKEN", "DISCORD_CLIENT_ID");
 
+// Collects each command's JSON definition and replaces the command list in every configured guild.
 async function main() {
   const commandsDir = path.join(__dirname, "commands");
   const files = readdirSync(commandsDir).filter((f) => f.endsWith(".js"));

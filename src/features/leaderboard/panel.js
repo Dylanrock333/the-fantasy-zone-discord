@@ -93,10 +93,12 @@ function selectOptionValues(panelMessage, customId) {
   return select?.options.map((o) => o.value).sort() ?? [];
 }
 
+// True if two sorted arrays hold the same values.
 function sameValues(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
+// True if the message has a component with this customId.
 function hasComponent(panelMessage, customId) {
   return panelMessage.components.some((row) => row.components.some((c) => c.customId === customId));
 }

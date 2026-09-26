@@ -3,7 +3,7 @@ const { Events, MessageFlags } = require("discord.js");
 const { logger } = require("../utils/logger");
 
 const name = Events.InteractionCreate;
-const once = false;
+const once = false; // fire on every interaction, not just the first
 
 // Dispatches by interaction type; any handler error gets a generic ephemeral reply.
 async function execute(interaction) {

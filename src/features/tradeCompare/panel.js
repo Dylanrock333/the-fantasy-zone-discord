@@ -18,6 +18,7 @@ const { settings } = require("../../config");
 // already-posted panel message across bot restarts, without a DB.
 const { panelMarker: PANEL_MARKER, defaultTradePrompt: DEFAULT_PROMPT, selectOptionCap } = settings.panels;
 
+// Team dropdown (single pick). Labels are cut to Discord's 100-char limit.
 function buildTeamSelectRow(customId, teams, selectedId, placeholder) {
   const options = teams.slice(0, selectOptionCap).map((t) =>
     new StringSelectMenuOptionBuilder()
@@ -32,6 +33,7 @@ function buildTeamSelectRow(customId, teams, selectedId, placeholder) {
   return new ActionRowBuilder().addComponents(menu);
 }
 
+// Roster dropdown that allows picking any number of players (0 up to the whole list).
 function buildPlayerSelectRow(customId, roster, selectedIds, placeholder) {
   const capped = roster.slice(0, selectOptionCap);
   const options = capped.map((p) =>
@@ -49,6 +51,7 @@ function buildPlayerSelectRow(customId, roster, selectedIds, placeholder) {
   return new ActionRowBuilder().addComponents(menu);
 }
 
+// Compare Trade / Edit Prompt / Cancel buttons, shown once both sides have players picked.
 function buildActionRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId("tradeCompare:compare").setLabel("Compare Trade").setStyle(ButtonStyle.Success),
@@ -62,6 +65,7 @@ function selectedNames(roster, selectedIds) {
   return selectedIds.map((id) => roster.find((p) => p.id === id)?.name).filter(Boolean);
 }
 
+// Selected player names for an embed field, or a placeholder if none.
 function describeSelection(roster, selectedIds) {
   const names = selectedNames(roster, selectedIds);
   return names.length ? names.join(", ") : "*(none selected)*";
@@ -81,10 +85,13 @@ function buildTradeMessage(session) {
   );
 }
 
+// Builds the panel embed and component rows for the session's current step.
+// locked: a compare is running, so only a disabled Cancel is shown.
+// error / resultText: extra embed field for a failure message or the AI's reply.
 function renderPanel(session, { locked = false, error = null, resultText = null } = {}) {
   const embed = new EmbedBuilder()
     .setTitle("🔀 Trade Compare")
-    .setColor(0x5865f2)
+    .setColor(0x5865f2) // Discord blurple
     .setFooter({ text: PANEL_MARKER })
     .setDescription(locked ? "Comparing trade..." : "Pick teams and players, then hit **Compare Trade**.");
 

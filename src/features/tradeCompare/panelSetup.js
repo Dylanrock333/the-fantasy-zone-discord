@@ -14,13 +14,17 @@ const { logger } = require("../../utils/logger");
 // and get duplicated - an accepted limitation for this MVP.
 const HISTORY_SCAN_LIMIT = settings.panels.tradeHistoryScanLimit;
 
+// Finds the bot's earlier panel in the channel by its embed footer marker.
 async function findExistingPanel(channel, botId) {
   const fetched = await channel.messages.fetch({ limit: HISTORY_SCAN_LIMIT });
   return fetched.find((m) => m.author.id === botId && m.embeds[0]?.footer?.text === PANEL_MARKER);
 }
 
+// Reuses the existing panel (resetting it) or posts a new one, and starts a fresh session for it.
+// Returns the panel's message ID, or null if the guild has no trade-compare channel.
 async function ensureTradePanel(client, guildId) {
   const config = GUILDS[guildId];
+  // TEMP_ IDs are placeholders, not real channels.
   if (!config?.tradeCompareChannelId || config.tradeCompareChannelId.startsWith("TEMP_")) {
     logger.warn(`Trade compare: no real tradeCompareChannelId configured for guild ${guildId}, skipping panel`);
     return null;
@@ -44,6 +48,7 @@ async function ensureTradePanel(client, guildId) {
   return posted.id;
 }
 
+// Runs the panel setup for every configured guild (on startup).
 async function ensureTradePanelForAllGuilds(client) {
   await forEachGuild(client, ensureTradePanel, "Trade compare panel setup");
 }

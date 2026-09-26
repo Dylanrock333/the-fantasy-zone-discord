@@ -5,6 +5,7 @@ const { settings } = require("../config");
 const { postWeeklyRecapForAllGuilds } = require("../jobs/weeklyRecap");
 const { postMatchupPreviewForAllGuilds } = require("../jobs/matchupPreview");
 
+// Cron expressions from config/default.js; only the preview has an explicit timezone.
 const { weeklyRecapCron, matchupPreviewCron, matchupPreviewTz } = settings.schedules;
 
 // Registers both cron jobs; failures are logged, never thrown.

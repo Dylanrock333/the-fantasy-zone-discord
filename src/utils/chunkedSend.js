@@ -1,6 +1,7 @@
 // Helpers for fitting long text into Discord's 2000-character message limit.
 const { settings } = require("../config");
 
+// Max characters per Discord message (2000).
 const DISCORD_LIMIT = settings.limits.discordMessageChars;
 
 // Splits text into <=limit chunks, breaking at the last newline when possible.

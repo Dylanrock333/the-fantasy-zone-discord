@@ -1,5 +1,6 @@
 // HTTP client for the fantasy-bot API (chat, charts, weekly recap, matchup preview, leaderboard).
 const { env } = require("../config");
+// Base URL of the fantasy-bot API (FANTASY_AGENT_URL env var, localhost by default).
 const FANTASY_AGENT_URL = env.FANTASY_AGENT_URL;
 
 // Flattens FastAPI error `detail` (string or list of {loc, msg}) into readable text.
@@ -34,6 +35,7 @@ async function request(path, label, body) {
   return res;
 }
 
+// Same as request, but returns the parsed JSON body.
 const requestJson = async (...args) => (await request(...args)).json();
 
 // Sends a chat message to the agent; sessionId (the channel ID) scopes server-side memory.

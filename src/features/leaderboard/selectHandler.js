@@ -3,6 +3,7 @@ const { setPending, getPending } = require("./state");
 const { buildPanelComponents } = require("./panel");
 const { prefetchLeaderboard } = require("./data");
 
+// parse converts the raw select value (e.g. Number for the count select).
 function makeSelectHandler(customId, field, parse = String) {
   return {
     customId,

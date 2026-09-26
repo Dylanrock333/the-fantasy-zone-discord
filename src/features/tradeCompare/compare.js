@@ -11,6 +11,7 @@ const { settings } = require("../../config");
 // goes out as plain follow-up messages via splitMessage's 2000-char chunks.
 const EMBED_FIELD_BUDGET = settings.limits.embedFieldBudget;
 
+// Compare Trade button: sends the trade to the agent and shows its reply on the panel.
 async function runCompare(interaction, session) {
   const messageId = interaction.message.id;
 

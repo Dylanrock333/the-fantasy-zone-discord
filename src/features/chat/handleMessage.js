@@ -20,6 +20,7 @@ async function chartFiles(charts) {
   const files = [];
   for (let i = 0; i < charts.length; i++) {
     const chart = charts[i];
+    // Filename from the chart title, e.g. "Top RBs" -> "top-rbs"
     const name = (chart.title || `chart-${i + 1}`).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
     try {
       files.push({ attachment: await renderChartImage(chart), name: `${name}.png` });
@@ -35,6 +36,7 @@ async function chartFiles(charts) {
 async function handleMessage(message, guildConfig, content) {
   await withTyping(message.channel, async () => {
     const recentBotMessages = await getRecentBotMessages(message.channel, message.id, message.client.user.id);
+    // Prepend the bot's recent replies so the agent knows what it last said here.
     const contextBlock = recentBotMessages.length
       ? `Context (my last ${recentBotMessages.length} messages in this channel):\n` +
         recentBotMessages.map((m) => `- ${m.content}`).join("\n") +

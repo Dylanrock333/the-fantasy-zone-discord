@@ -14,6 +14,7 @@ const { env, requireEnv } = require("./config");
 
 requireEnv("DISCORD_TOKEN");
 
+// Guilds for channels/interactions; GuildMessages + MessageContent to read chat messages.
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -25,9 +26,12 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel],
 });
 
+// Filled by loadCommands; interactionCreate looks slash commands up here by name.
 client.commands = new Collection();
 
+// Loads every handler before logging in so no interaction arrives unhandled, then starts the cron jobs.
 async function main() {
+  // customId -> handler maps that interactionCreate routes to
   client.buttons = await loadButtonHandlers();
   client.modals = await loadModalHandlers();
   client.selects = await loadSelectHandlers();
