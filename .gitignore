@@ -11,3 +11,4 @@ node_modules/
 .codex/
 .agents/
 skills-lock.json
+.beads/
