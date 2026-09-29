@@ -9,6 +9,7 @@ module.exports = {
       weeklyReportsChannelId: "1549139619004686366",
       matchupChannelId: "1549303658452222003",
       leaderboardChannelId: "1551612311863558356",
+      tradeCompareChannelId: "1552423423240708166",
     },
     // test
     "1547852208677199943": {
