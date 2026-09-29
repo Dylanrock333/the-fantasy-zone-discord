@@ -2,7 +2,7 @@
 module.exports = {
   // guild ID -> its channels and league (field meanings: see guilds in default.js)
   guilds: {
-    // main
+    // main (PHI PSI)
     "1544547612659679294": {
       chatChannelId: "1544548090025877604",
       leagueId: 1992397255,
@@ -11,7 +11,7 @@ module.exports = {
       leaderboardChannelId: "1551612311863558356",
       tradeCompareChannelId: "1552423423240708166",
     },
-    // test
+    // test (PHI PSI)
     "1547852208677199943": {
       chatChannelId: "1548100929906151537",
       leagueId: 1992397255,
@@ -20,7 +20,7 @@ module.exports = {
       leaderboardChannelId: "1551612094900600984",
       tradeCompareChannelId: "1550331446365917224",
     },
-    //weenie huts jrs
+    //main weenie huts jrs
     "1552814146477629463": {
       chatChannelId: "1552814147572465814",
       leagueId: 565242447,
