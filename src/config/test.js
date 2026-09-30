@@ -11,15 +11,6 @@ module.exports = {
       leaderboardChannelId: "1551612311863558356",
       tradeCompareChannelId: "1552423423240708166",
     },
-    // test (PHI PSI)
-    "1547852208677199943": {
-      chatChannelId: "1548100929906151537",
-      leagueId: 1992397255,
-      weeklyReportsChannelId: "1549126393076654130",
-      matchupChannelId: "1550018778983702548",
-      leaderboardChannelId: "1551612094900600984",
-      tradeCompareChannelId: "1550331446365917224",
-    },
     //main weenie huts jrs
     "1552814146477629463": {
       chatChannelId: "1552814147572465814",
@@ -28,6 +19,24 @@ module.exports = {
       matchupChannelId: "1552814147421474820",
       leaderboardChannelId: "1552814147421474825",
       tradeCompareChannelId: "1552814147572465815",
+    },
+    //Brotherhood of the gridiron (TEST)
+    "1554504461236310036": {
+      chatChannelId: "1554504461672644652",
+      leagueId: 1992397255,
+      weeklyReportsChannelId: "1554504461236310040",
+      matchupChannelId: "1554504461236310041",
+      leaderboardChannelId: "1554504461672644651",
+      tradeCompareChannelId: "1554504461672644653",
+    },
+    //weenie huts jrs (TEST)
+    "1554504954113171488": {
+      chatChannelId: "1554504954830655498",
+      leagueId: 565242447,
+      weeklyReportsChannelId: "1554504954570481837",
+      matchupChannelId: "1554504954570481838",
+      leaderboardChannelId: "1554504954570481843",
+      tradeCompareChannelId: "1554504954830655499",
     },
   },
 };
