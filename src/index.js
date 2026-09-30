@@ -10,6 +10,7 @@ const {
   loadSelectHandlers,
 } = require("./utils/loaders");
 const { startScheduledJobs } = require("./jobs/scheduler");
+const { startHealthServer } = require("./utils/healthServer");
 const { env, requireEnv } = require("./config");
 
 requireEnv("DISCORD_TOKEN");
@@ -41,6 +42,7 @@ async function main() {
 
   await client.login(env.DISCORD_TOKEN);
   startScheduledJobs(client);
+  startHealthServer();
 }
 
 main().catch((err) => {

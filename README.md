@@ -80,6 +80,17 @@ instance reachable at `FANTASY_AGENT_URL`. Add each guild you run in to
 Currently `test.js` lists both guilds and `prod.js` only the main one.
 Tunables (cron schedules, cache TTL, limits) live in `src/config/default.js`; an env file only needs the values it overrides.
 
+### Deploying to Render
+
+The Dockerfile's `CMD` runs `npm run deploy-commands` (re-registers slash
+commands for every guild in `APP_ENV`'s config) and then `npm start` on
+every container boot, so `DISCORD_CLIENT_ID` must be set as a Render env
+var alongside `DISCORD_TOKEN`, `FANTASY_AGENT_URL`, and `APP_ENV`. The bot
+itself has no HTTP server — it only holds a Discord gateway connection —
+so `src/index.js` also starts a tiny health-check listener on `PORT`
+(`src/utils/healthServer.js`) purely so Render's Web Service health check
+has something to hit; it isn't used for anything else.
+
 ## Roadmap / infra TODOs
 
 Cross-cutting ops work spanning this repo and
