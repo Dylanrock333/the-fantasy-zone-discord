@@ -59,6 +59,7 @@ const env = {
   DISCORD_TOKEN: process.env.DISCORD_TOKEN,
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
   FANTASY_AGENT_URL: process.env.FANTASY_AGENT_URL || "http://localhost:8787",
+  DB_PATH: process.env.DB_PATH || `./data/user_teams.${APP_ENV}.db`,
 };
 
 // Throws if any of the named env vars is unset (each entry point requires only what it needs).

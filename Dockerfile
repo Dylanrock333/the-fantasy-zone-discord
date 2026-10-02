@@ -7,4 +7,5 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY src ./src
+RUN mkdir -p data
 CMD ["sh", "-c", "npm run deploy-commands && npm start"]
