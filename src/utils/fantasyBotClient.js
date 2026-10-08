@@ -39,8 +39,16 @@ async function request(path, label, body) {
 const requestJson = async (...args) => (await request(...args)).json();
 
 // Sends a chat message to the agent; sessionId (the channel ID) scopes server-side memory.
-async function sendChat(message, leagueId, sessionId) {
-  const { reply } = await requestJson("/api/chat", "fantasy agent", { session_id: sessionId, message, league_id: leagueId });
+// identity (from db.getUserTeam) is optional - when present, its fields let the agent address
+// the caller by their fantasy team instead of needing them to say who they are.
+async function sendChat(message, leagueId, sessionId, identity = null) {
+  const body = { session_id: sessionId, message, league_id: leagueId };
+  if (identity) {
+    body.team_id = identity.team_id;
+    body.team_name = identity.team_name;
+    body.espn_owner_id = identity.espn_owner_id;
+  }
+  const { reply } = await requestJson("/api/chat", "fantasy agent", body);
   return reply;
 }
 

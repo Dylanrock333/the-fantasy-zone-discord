@@ -4,6 +4,7 @@ const { settings } = require("../../config");
 const { sendChat } = require("../../utils/fantasyBotClient");
 const { splitMessage } = require("../../utils/chunkedSend");
 const { withTyping } = require("../../utils/typingIndicator");
+const { getUserTeam } = require("../../db");
 
 // Fetches the bot's recent messages in the channel to use as chat context (no history stored locally).
 async function getRecentBotMessages(channel, beforeId, botId, count = settings.chat.contextMessages, searchLimit = settings.chat.contextSearchLimit) {
@@ -25,7 +26,8 @@ async function handleMessage(message, guildConfig, content) {
         "\n\n"
       : "";
 
-    const reply = await sendChat(contextBlock + content, guildConfig.leagueId, message.channelId);
+    const identity = getUserTeam(message.guildId, message.author.id);
+    const reply = await sendChat(contextBlock + content, guildConfig.leagueId, message.channelId, identity);
     for (const chunk of splitMessage(reply)) {
       await message.reply(chunk);
     }

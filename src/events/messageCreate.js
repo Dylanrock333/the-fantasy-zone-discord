@@ -2,6 +2,7 @@
 const { Events } = require("discord.js");
 const { logger } = require("../utils/logger");
 const { GUILDS } = require("../config");
+const { getChannel } = require("../db");
 const { handleMessage } = require("../features/chat/handleMessage");
 
 const name = Events.MessageCreate;
@@ -14,9 +15,11 @@ async function execute(message) {
   const guildConfig = GUILDS[message.guildId]; // undefined for DMs and unconfigured guilds
   if (!guildConfig) return;
 
-  const inFantasyChannel = message.channelId === guildConfig.chatChannelId;
+  const inFantasyChannel = message.channelId === guildConfig.mainChatChannelId;
+  const privateChatChannel = getChannel(message.guildId, "chat", message.author.id);
+  const inPrivateChatChannel = privateChatChannel?.channel_id === message.channelId;
   const mentioned = message.mentions.has(message.client.user);
-  if (!inFantasyChannel && !mentioned) return;
+  if (!inFantasyChannel && !inPrivateChatChannel && !mentioned) return;
 
   const content = mentioned
     ? message.content.replace(`<@${message.client.user.id}>`, "").trim()
