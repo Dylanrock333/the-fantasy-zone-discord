@@ -6,6 +6,9 @@ const path = require("path");
 const Database = require("better-sqlite3");
 const { env } = require("../config");
 
+// Known channel_type values; commands build their option choices from this so a typo can't create a phantom type.
+const CHANNEL_TYPES = ["chat", "leaderboard", "tradeCompare", "weeklyReports", "matchup"];
+
 fs.mkdirSync(path.dirname(env.DB_PATH), { recursive: true });
 const db = new Database(env.DB_PATH);
 db.pragma("journal_mode = WAL");
@@ -81,12 +84,25 @@ function listChannelsForGuild(guildId) {
   return db.prepare("SELECT * FROM channels WHERE guild_id = ?").all(guildId);
 }
 
+// Removes a user's team link in a guild (there's normally exactly one row to remove).
+function deleteUserTeam(guildId, discordUserId) {
+  db.prepare("DELETE FROM user_teams WHERE guild_id = ? AND discord_user_id = ?").run(guildId, discordUserId);
+}
+
+// Removes one channel mapping; omit discordUserId to remove a shared channel.
+function deleteChannel(guildId, channelType, discordUserId = "") {
+  db.prepare("DELETE FROM channels WHERE guild_id = ? AND discord_user_id = ? AND channel_type = ?").run(guildId, discordUserId, channelType);
+}
+
 module.exports = {
   db,
+  CHANNEL_TYPES,
   upsertUserTeam,
   getUserTeam,
   listUserTeamsForGuild,
+  deleteUserTeam,
   upsertChannel,
   getChannel,
   listChannelsForGuild,
+  deleteChannel,
 };
