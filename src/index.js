@@ -15,10 +15,12 @@ const { env, requireEnv } = require("./config");
 
 requireEnv("DISCORD_TOKEN");
 
-// Guilds for channels/interactions; GuildMessages + MessageContent to read chat messages.
+// Guilds for channels/interactions; GuildMessages + MessageContent to read chat messages;
+// GuildMembers (privileged - enable in the Developer Portal) for guildMemberRemove.
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
   ],
