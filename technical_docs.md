@@ -97,7 +97,7 @@ Component handlers (customId -> action):
 | `tradeCompare:editPrompt` / `tradeCompare:promptModal` | button / modal | edit custom prompt (<=1000 chars) | none |
 | `tradeCompare:cancel` | button | reset session to fresh | none |
 
-Non-slash trigger: any non-bot message in `chatChannelId` or @mentioning the bot (see section 4).
+Non-slash trigger: any non-bot message in `mainChatChannelId` or @mentioning the bot (see section 4).
 
 ## 4. Feature / channel map
 
@@ -105,7 +105,7 @@ Per-guild config lives in `src/config/<APP_ENV>.js` and each process sees only i
 
 | Field | Purpose | main guild `1544547612659679294` | test guild `1547852208677199943` |
 |---|---|---|---|
-| `chatChannelId` | chat channel (all messages answered) | 1544548090025877604 | 1548100929906151537 |
+| `mainChatChannelId` | chat channel (all messages answered) | 1544548090025877604 | 1548100929906151537 |
 | `weeklyReportsChannelId` | Tuesday recap; also read for last recap text | 1549139619004686366 | 1549126393076654130 |
 | `matchupChannelId` | Thursday preview | 1549303658452222003 | 1550018778983702548 |
 | `leaderboardChannelId` | standing leaderboard panel | 1551612311863558356 | 1551612094900600984 |
@@ -115,7 +115,7 @@ Per-guild config lives in `src/config/<APP_ENV>.js` and each process sees only i
 `getGuildConfig(guildId, requiredField)` throws if guild or the field is missing.
 
 Message flow (`events/messageCreate.js` -> `features/chat/handleMessage.js`):
-1. Ignore bots; guild config lookup; proceed only if in `chatChannelId` or bot is @mentioned; strip mention; skip empty.
+1. Ignore bots; guild config lookup; proceed only if in `mainChatChannelId` or bot is @mentioned; strip mention; skip empty.
 2. `withTyping` -> fetch last 10 channel msgs before this one, keep bot's last 5 as text "Context" block (no local history).
 3. `sendChat(context + content, leagueId, channelId)` -> `POST /api/chat` (session_id = channel ID).
 4. `splitMessage(reply)` (2000 cap, cut at newline); `message.reply` each chunk.

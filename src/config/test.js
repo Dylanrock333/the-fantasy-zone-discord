@@ -4,21 +4,23 @@ module.exports = {
   guilds: {
     //Brotherhood of the gridiron (TEST)
     "1554504461236310036": {
-      chatChannelId: "1554504461672644652",
+      mainChatChannelId: "1554504461236310038",
       leagueId: 1992397255,
       weeklyReportsChannelId: "1554504461236310040",
       matchupChannelId: "1554504461236310041",
       leaderboardChannelId: "1554504461672644651",
       tradeCompareChannelId: "1554504461672644653",
+      welcomeTeamPickerChannelId: "1556894516378607616"
     },
     //weenie huts jrs (TEST)
     "1554504954113171488": {
-      chatChannelId: "1554504954830655498",
+      mainChatChannelId: "1554504954570481835",
       leagueId: 565242447,
       weeklyReportsChannelId: "1554504954570481837",
       matchupChannelId: "1554504954570481838",
       leaderboardChannelId: "1554504954570481843",
       tradeCompareChannelId: "1554504954830655499",
+      welcomeTeamPickerChannelId: "1556894668137169007"
     },
   },
 };

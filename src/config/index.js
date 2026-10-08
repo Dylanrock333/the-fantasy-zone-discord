@@ -42,7 +42,7 @@ function validate({ schedules, guilds }) {
   }
   if (!Object.keys(guilds).length) throw new Error(`No guilds configured for APP_ENV=${APP_ENV}`);
   for (const [guildId, guild] of Object.entries(guilds)) {
-    for (const field of ["chatChannelId", "leagueId"]) {
+    for (const field of ["mainChatChannelId", "leagueId"]) {
       if (!guild[field]) throw new Error(`Guild ${guildId} is missing ${field}`);
     }
   }

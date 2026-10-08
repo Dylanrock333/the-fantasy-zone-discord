@@ -35,6 +35,7 @@ module.exports = {
     panelMarker: "trade-compare-panel", // embed footer used to recognize the panel across restarts
     // Prompt sent with a trade until someone changes it with Edit Prompt.
     defaultTradePrompt: "what do you think of this trade, take into consideration the team and pull in player stats",
+    teamPickerScanLimit: 20, // recent messages checked for an existing team-picker panel
   },
 
   // Discord and input size limits.
@@ -45,11 +46,12 @@ module.exports = {
   },
 
   // Per-guild IDs live in prod.js / test.js, keyed by Discord guild ID:
-  //   chatChannelId          - channel where every message goes to the AI (required)
+  //   mainChatChannelId      - channel where every message goes to the AI (required)
   //   leagueId               - fantasy league ID sent to fantasy-bot (required)
   //   weeklyReportsChannelId - where the Tuesday weekly recap posts
   //   matchupChannelId       - where the Thursday matchup preview posts
   //   leaderboardChannelId   - where the leaderboard panel lives
   //   tradeCompareChannelId  - where the trade-compare panel lives (omit to disable)
+  //   welcomeTeamPickerChannelId - where the "Pick Your Team" onboarding panel lives (omit to disable)
   guilds: {},
 };

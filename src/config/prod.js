@@ -4,7 +4,7 @@ module.exports = {
   guilds: {
     // main (PHI PSI)
     "1544547612659679294": {
-      chatChannelId: "1544548090025877604",
+      mainChatChannelId: "1544547613724909621",
       leagueId: 1992397255,
       weeklyReportsChannelId: "1549139619004686366",
       matchupChannelId: "1549303658452222003",
@@ -13,7 +13,7 @@ module.exports = {
     },
     //main weenie huts jrs
     "1552814146477629463": {
-      chatChannelId: "1552814147572465814",
+      mainChatChannelId: "1552814147421474817",
       leagueId: 565242447,
       weeklyReportsChannelId: "1552814147421474819",
       matchupChannelId: "1552814147421474820",
