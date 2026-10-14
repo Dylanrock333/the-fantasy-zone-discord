@@ -12,16 +12,15 @@ const {
 
 const { settings } = require("../../config");
 
-// PANEL_MARKER is the footer on the panel embed - how panelSetup.js recognizes an
+// PANEL_MARKER is the button customId on the panel - how panelSetup.js recognizes an
 // already-posted panel message across bot restarts, without a DB.
-const PANEL_MARKER = "onboarding-team-picker-panel";
+const PANEL_MARKER = "onboarding:pickTeam";
 
 // The standing panel: instructions + a button that opens the ephemeral team-picker.
 function renderPanel() {
   const embed = new EmbedBuilder()
     .setTitle("🏈 Pick Your Team")
     .setColor(0x5865f2) // Discord blurple
-    .setFooter({ text: PANEL_MARKER })
     .setDescription(
       "Link your Discord account to your fantasy team so the bot always knows who's asking - " +
         "no more saying who you are every time.\n\n" +
@@ -36,7 +35,7 @@ function renderPanel() {
         "🔒 **your private channel** - 1:1 w/ the bot, just for you"
     );
 
-  const button = new ButtonBuilder().setCustomId("onboarding:pickTeam").setLabel("Pick Your Team").setStyle(ButtonStyle.Primary);
+  const button = new ButtonBuilder().setCustomId(PANEL_MARKER).setLabel("Pick Your Team").setStyle(ButtonStyle.Primary);
   return { embeds: [embed], components: [new ActionRowBuilder().addComponents(button)] };
 }
 

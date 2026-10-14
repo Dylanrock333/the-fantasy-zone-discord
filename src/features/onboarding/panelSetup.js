@@ -8,10 +8,10 @@ const { logger } = require("../../utils/logger");
 // How far back to look for an already-posted panel when recovering after a restart.
 const HISTORY_SCAN_LIMIT = settings.panels.teamPickerScanLimit;
 
-// Finds the bot's earlier panel in the channel by its embed footer marker.
+// Finds the bot's earlier panel in the channel by its button's customId marker.
 async function findExistingPanel(channel, botId) {
   const fetched = await channel.messages.fetch({ limit: HISTORY_SCAN_LIMIT });
-  return fetched.find((m) => m.author.id === botId && m.embeds[0]?.footer?.text === PANEL_MARKER);
+  return fetched.find((m) => m.author.id === botId && m.components[0]?.components[0]?.customId === PANEL_MARKER);
 }
 
 // Reuses the existing panel or posts a new one.
