@@ -134,8 +134,20 @@ async function grantMemberRole(guild, discordUserId) {
 async function deleteMemberData(guild, discordUserId) {
   const rows = listChannelsForGuild(guild.id).filter((r) => r.discord_user_id === discordUserId);
   for (const row of rows) {
-    await guild.channels.delete(row.channel_id).catch(() => null);
-    deleteChannel(guild.id, row.channel_type, discordUserId);
+    try {
+      await guild.channels.delete(row.channel_id);
+      deleteChannel(guild.id, row.channel_type, discordUserId);
+    } catch (err) {
+      if (err.code === 10003) {
+        // Already gone from Discord; clear the now-stale DB row.
+        deleteChannel(guild.id, row.channel_type, discordUserId);
+      } else {
+        logger.error(
+          `Failed to delete ${row.channel_type} channel ${row.channel_id} for user ${discordUserId} in guild ${guild.id}, leaving DB row intact for retry:`,
+          err
+        );
+      }
+    }
   }
   deleteUserTeam(guild.id, discordUserId);
 
