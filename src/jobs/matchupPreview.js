@@ -16,7 +16,7 @@ async function getLastRecapSummary(client, config) {
 }
 
 // Posts the matchup image (if fantasy-bot produced one) and the preview text to the guild's matchup channel.
-async function postMatchupPreview(client, guildId) {
+async function postMatchupPreview(client, guildId, week = 0) {
   const config = getGuildConfig(guildId, "matchupChannelId");
   const channel = await client.channels.fetch(config.matchupChannelId);
 
@@ -28,17 +28,17 @@ async function postMatchupPreview(client, guildId) {
     logger.error(`Fetching last weekly recap message failed for guild ${guildId}, continuing without it:`, err);
   }
 
-  const { week, league_preview, matchups, matchup_image_base64 } =
-    await getMatchupPreview(config.leagueId, 0, previousRecapContext);
+  const { week: resolvedWeek, league_preview, matchups, matchup_image_base64 } =
+    await getMatchupPreview(config.leagueId, week, previousRecapContext);
 
   if (matchup_image_base64) {
-    const attachment = base64ToAttachment(matchup_image_base64, `week-${week}-matchup-preview.png`);
+    const attachment = base64ToAttachment(matchup_image_base64, `week-${resolvedWeek}-matchup-preview.png`);
     await channel.send({ files: [attachment] });
   }
 
-  await sendChunked(channel, `**Week ${week} Matchups Ahead**\n${league_preview}`);
+  await sendChunked(channel, `**Week ${resolvedWeek} Matchups Ahead**\n${league_preview}`);
 
-  return { week, matchupCount: matchups.length };
+  return { week: resolvedWeek, matchupCount: matchups.length };
 }
 
 // Runs the matchup preview for every configured guild (cron).
