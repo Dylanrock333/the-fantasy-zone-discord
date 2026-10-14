@@ -26,7 +26,14 @@ function renderPanel() {
       "Link your Discord account to your fantasy team so the bot always knows who's asking - " +
         "no more saying who you are every time.\n\n" +
         "Press **Pick Your Team** below. Only you'll see the list, and teams someone else already " +
-        "claimed won't show up."
+        "claimed won't show up.\n\n" +
+        "**Once you're linked, here's where to go:**\n" +
+        "🏟️ **The War Room** - general chat w/ the bot\n" +
+        "📊 **weekly-reports** - Tue 12AM CT power rankings\n" +
+        "⚔️ **matchup-preview** - Thu 5PM CT preview\n" +
+        "🏆 **leaderboard** - live standings\n" +
+        "🔁 **trade-compare** - AI trade take\n" +
+        "🔒 **your private channel** - 1:1 w/ the bot, just for you"
     );
 
   const button = new ButtonBuilder().setCustomId("onboarding:pickTeam").setLabel("Pick Your Team").setStyle(ButtonStyle.Primary);
