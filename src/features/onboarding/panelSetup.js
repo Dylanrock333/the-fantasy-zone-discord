@@ -25,7 +25,10 @@ async function ensureTeamPickerPanel(client, guildId) {
 
   const channel = await client.channels.fetch(config.welcomeTeamPickerChannelId);
   const existing = await findExistingPanel(channel, client.user.id);
-  if (existing) return existing.id;
+  if (existing) {
+    await existing.edit(renderPanel());
+    return existing.id;
+  }
 
   const posted = await channel.send(renderPanel());
   return posted.id;
