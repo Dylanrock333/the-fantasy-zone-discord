@@ -161,6 +161,7 @@ async function deleteMemberData(guild, discordUserId) {
 async function ensureMemberGroupsForGuild(client, guildId) {
   if (!GUILDS[guildId]) return;
   const guild = await client.guilds.fetch(guildId);
+  if (!guild.members.me) await guild.members.fetchMe();
 
   for (const row of listUserTeamsForGuild(guildId)) {
     try {
