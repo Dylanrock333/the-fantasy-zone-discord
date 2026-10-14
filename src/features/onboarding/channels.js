@@ -21,9 +21,16 @@ const { logger } = require("../../utils/logger");
 const PRIVATE_CHANNEL_NAMES = { chat: "🔒fantasy-bot" };
 const CATEGORY_TYPE = "category";
 const MEMBER_ROLE_NAME = "Member";
+const ANCHOR_CATEGORY_PATTERN = /general|war.?room/i;
 
 function categoryName(teamName) {
   return `${teamName || "Your team"} private channels`.slice(0, 100);
+}
+
+// Position new member categories right after the general/war-room category, if one exists.
+function anchorPosition(guild) {
+  const anchor = guild.channels.cache.find((c) => c.type === ChannelType.GuildCategory && ANCHOR_CATEGORY_PATTERN.test(c.name));
+  return anchor ? anchor.position : undefined;
 }
 
 function memberOverwrites(guild, discordUserId) {
@@ -41,14 +48,21 @@ async function fetchRecorded(guild, discordUserId, channelType) {
   return guild.channels.fetch(row.channel_id).catch(() => null);
 }
 
-// Creates the member's category if missing (or if the recorded one was deleted).
+// Creates the member's category if missing (or if the recorded one was deleted), and
+// re-pins an existing one back above the anchor category if it has drifted - keeps every
+// member's category grouped together even after manual reordering or new categories appear.
 async function ensureMemberCategory(guild, discordUserId, teamName) {
   const existing = await fetchRecorded(guild, discordUserId, CATEGORY_TYPE);
-  if (existing) return existing;
+  if (existing) {
+    const position = anchorPosition(guild);
+    if (position !== undefined && existing.position !== position) await existing.setPosition(position);
+    return existing;
+  }
 
   const category = await guild.channels.create({
     name: categoryName(teamName),
     type: ChannelType.GuildCategory,
+    position: anchorPosition(guild),
     permissionOverwrites: memberOverwrites(guild, discordUserId),
   });
   upsertChannel({ guildId: guild.id, discordUserId, channelType: CATEGORY_TYPE, channelId: category.id });

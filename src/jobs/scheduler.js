@@ -5,17 +5,21 @@ const { settings } = require("../config");
 const { postWeeklyRecapForAllGuilds } = require("./weeklyRecap");
 const { postMatchupPreviewForAllGuilds } = require("./matchupPreview");
 
-// Cron expressions from config/default.js; only the preview has an explicit timezone.
-const { weeklyRecapCron, matchupPreviewCron, matchupPreviewTz } = settings.schedules;
+// Cron expressions and shared timezone from config/default.js.
+const { weeklyRecapCron, matchupPreviewCron, scheduleTz } = settings.schedules;
 
 // Registers both cron jobs; failures are logged, never thrown.
 function startScheduledJobs(client) {
-  cron.schedule(weeklyRecapCron, () => {
-    logger.info("Running scheduled weekly recap...");
-    postWeeklyRecapForAllGuilds(client).catch((err) =>
-      logger.error("Scheduled weekly recap failed:", err)
-    );
-  });
+  cron.schedule(
+    weeklyRecapCron,
+    () => {
+      logger.info("Running scheduled weekly recap...");
+      postWeeklyRecapForAllGuilds(client).catch((err) =>
+        logger.error("Scheduled weekly recap failed:", err)
+      );
+    },
+    { timezone: scheduleTz }
+  );
 
   cron.schedule(
     matchupPreviewCron,
@@ -25,7 +29,7 @@ function startScheduledJobs(client) {
         logger.error("Scheduled matchup preview failed:", err)
       );
     },
-    { timezone: matchupPreviewTz }
+    { timezone: scheduleTz }
   );
 }
 

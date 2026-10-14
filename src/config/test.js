@@ -13,14 +13,14 @@ module.exports = {
       welcomeTeamPickerChannelId: "1556894516378607616"
     },
     //weenie huts jrs (TEST)
-    "1554504954113171488": {
-      mainChatChannelId: "1554504954570481835",
+    "1558300894599057560": {
+      mainChatChannelId: "1558300896348344393",
       leagueId: 565242447,
-      weeklyReportsChannelId: "1554504954570481837",
-      matchupChannelId: "1554504954570481838",
-      leaderboardChannelId: "1554504954570481843",
-      tradeCompareChannelId: "1554504954830655499",
-      welcomeTeamPickerChannelId: "1556894668137169007"
+      weeklyReportsChannelId: "1558300896348344395",
+      matchupChannelId: "1558300896834625647",
+      leaderboardChannelId: "1558300897422082138",
+      tradeCompareChannelId: "1558300897422082139",
+      welcomeTeamPickerChannelId: "1558300896348344391"
     },
   },
 };

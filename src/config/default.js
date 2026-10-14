@@ -2,9 +2,9 @@
 module.exports = {
   // When the automated posts run (node-cron syntax).
   schedules: {
-    weeklyRecapCron: "0 0 * * 2", // Tuesday 00:00 (server time), after Monday Night Football
-    matchupPreviewCron: "0 17 * * 4", // Thursday 17:00 in matchupPreviewTz, before Thursday Night Football
-    matchupPreviewTz: "America/Chicago", // timezone for matchupPreviewCron
+    weeklyRecapCron: "0 0 * * 2", // Tuesday 00:00 in scheduleTz, after Monday Night Football
+    matchupPreviewCron: "0 17 * * 4", // Thursday 17:00 in scheduleTz, before Thursday Night Football
+    scheduleTz: "America/Chicago", // timezone for both crons
   },
 
   // Leaderboard panel and /leaderboard command.
